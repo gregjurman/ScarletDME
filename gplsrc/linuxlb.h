@@ -40,7 +40,7 @@
 
 /* Simple substitutes */
 
-#define chsize(fd,bytes) ftruncate(fd,bytes)
+#define chsize(fd,bytes) ftruncate64(fd,bytes)
 #define GetCurrentProcessId() getpid()
 #define stricmp(a,b) strcasecmp(a,b)
 

@@ -18,11 +18,11 @@
 #    QM_GCC_OPTIONS  Compiler options
 #    QMLIBS          Libraries
 
-QMSYS=/usr/qmsys
+QMSYS=/opt/qmsys
 GPLSRC=gplsrc
 GPLOBJ=gplobj
 GPLBIN=bin
-QM_GCC_OPTIONS="-Wall -Werror -DLINUX -D_FILE_OFFSET_BITS=64 -DGPL -g"
+QM_GCC_OPTIONS="-Wall -Werror -DLINUX -D_FILE_OFFSET_BITS=64 -DGPL -g -fPIC"
 QMLIBS="-lm -lcrypt -ldl"
 
 STAGE=$1

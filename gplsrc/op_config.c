@@ -175,6 +175,7 @@ void op_pconfig()
  bool status = FALSE;
  char param[8+1];
  STRING_CHUNK * str;
+ str = NULL;
  long int n;
 
 
@@ -308,12 +309,14 @@ void op_pconfig()
  else if (!strcmp(param, "SH"))
   {
    k_get_string(descr);
+   if (str == NULL) goto exit_op_pconfig;
    if (str->string_len > MAX_SH_CMD_LEN) goto exit_op_pconfig;
    k_get_c_string(descr, pcfg.sh, MAX_SH_CMD_LEN);
   }
  else if (!strcmp(param, "SH1"))
   {
    k_get_string(descr);
+   if (str == NULL) goto exit_op_pconfig;
    if (str->string_len > MAX_SH_CMD_LEN) goto exit_op_pconfig;
    k_get_c_string(descr, pcfg.sh1, MAX_SH_CMD_LEN);
   }

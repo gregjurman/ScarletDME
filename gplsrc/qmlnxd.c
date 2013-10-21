@@ -71,7 +71,7 @@ int main()
  /* Attach the shared memory segment */
 
  if (((shmid = shmget(QM_SHM_KEY, 0, 0666)) == -1)
-    || (((int)(sysseg = (SYSSEG *)shmat(shmid, NULL, 0))) == -1))
+    || (((long int)(sysseg = (SYSSEG *)shmat(shmid, NULL, 0))) == -1))
   {
    exit(1);
   }

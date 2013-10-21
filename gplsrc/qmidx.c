@@ -646,7 +646,7 @@ bool attach_shared_memory()
 
  if ((shmid = shmget(QM_SHM_KEY, 0, 0666)) != -1)
   {
-   if ((int)(sysseg = (SYSSEG *)shmat(shmid, NULL, 0)) == -1)
+   if ((long int)(sysseg = (SYSSEG *)shmat(shmid, NULL, 0)) == -1)
     {
      printf("Error %d attaching to shared segment\n", errno);
      return FALSE;

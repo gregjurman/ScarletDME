@@ -1599,7 +1599,7 @@ void op_umask()
  */
 
  DESCRIPTOR * descr;
- int n;
+ int n = 0;
 
  descr = e_stack - 1;
  GetInt(descr);

@@ -1,4 +1,4 @@
 [qm]
-QMSYS=/usr/qmsys
+QMSYS=/opt/qmsys
 NUMUSERS=10
 SORTMEM=4096

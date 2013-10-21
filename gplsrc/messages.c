@@ -117,13 +117,11 @@ bool load_language(char * language_prefix)
 
 char * sysmsg(int msg_no)
 {
- STRING_CHUNK * str = NULL; /* redundant */
  char id[16];           /* Holds the msg id */
  char path[MAX_PATHNAME_LEN+1]; /* Pathstring of the MESSAGES file or Record */
  int n;                 /* A random tmp var by Ladybridge */
  int msg_rec = -1;           /* The message record FileHandle */
  char * p;
- STRING_CHUNK * q;
  struct stat msg_stat; /* Holds Dir records files stats */
  int status;
 

@@ -553,6 +553,7 @@ Private bool load_pcode(char * pname, u_char ** ptr)
    else if (obj->magic != HDR_MAGIC)
     {
      fprintf(stderr, "Pcode is corrupt (%s)\n", u_pname);
+     fprintf(stderr, "Expected %#010x, got %#010x", obj->magic, HDR_MAGIC);
      return FALSE;
     }
 

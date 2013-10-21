@@ -63,7 +63,7 @@ TEMPSRCS := $(wildcard *.c)
 SRCS     := $(TEMPSRCS:qmclient.c=)
 OBJS     := $(SRCS:.c=.o)
 DIROBJS  := $(addprefix $(GPLOBJ),$(OBJS))
-INSTROOT := /usr/qmsys
+INSTROOT := /opt/qmsys
 
 #TEMPOBJS := $(SRCS:.c=.o)
 #OBJS     := $(addprefix $(GPLOBJ),$(TEMPOBJS))
@@ -177,7 +177,7 @@ datafiles:
 	@cp -r $(MAIN)ACCOUNTS/ $(INSTROOT)/ACCOUNTS
 	@cp -r $(MAIN)ACCOUNTS.DIC/ $(INSTROOT)/ACCOUNTS.DIC
 	@cp -r $(MAIN)BP/ $(INSTROOT)/BP
-	@cp -r $(MAIN)cat/ $(INSTROOT)/cat
+	#@cp -r $(MAIN)cat/ $(INSTROOT)/cat
 	@cp -r $(MAIN)DICT.DIC/ $(INSTROOT)/DICT.DIC
 	@cp -r $(MAIN)DIR_DICT/ $(INSTROOT)/DIR_DICT
 	@cp -r $(MAIN)ERRMSG/ $(INSTROOT)/ERRMSG
@@ -185,10 +185,10 @@ datafiles:
 	@cp -r $(MAIN)gcat/ $(INSTROOT)/gcat
 	@chmod 665 $(INSTROOT)/gcat/*
 	@cp -r $(MAIN)GPL.BP/ $(INSTROOT)/GPL.BP
-	@cp -r $(MAIN)\$$HOLD/ $(INSTROOT)/\$$HOLD
+	#@cp -r $(MAIN)\$$HOLD/ $(INSTROOT)/\$$HOLD
 	@cp -r $(MAIN)\$$HOLD.DIC/ $(INSTROOT)/\$$HOLD.DIC
 	@chmod 665 $(INSTROOT)/\$$HOLD.DIC/*
-	@cp -r $(MAIN)\/$$IPC/ $(INSTROOT)/\$$IPC
+	@cp -r $(MAIN)\$$IPC/ $(INSTROOT)/\$$IPC
 	@cp -r $(MAIN)\$$LOGINS/ $(INSTROOT)/\$$LOGINS
 	@chmod 665 $(INSTROOT)/\$$LOGINS/*
 	@cp -r $(MAIN)\$$MAP/ $(INSTROOT)/\$$MAP
@@ -196,11 +196,11 @@ datafiles:
 	@cp -r $(MAIN)\$$MAP.DIC/ $(INSTROOT)/\$$MAP.DIC
 	@cp -r $(MAIN)MESSAGES/ $(INSTROOT)/MESSAGES
 	@cp -r $(MAIN)NEWVOC/ $(INSTROOT)/NEWVOC
-	@cp -r $(MAIN)prt/ $(INSTROOT)/prt
+	#@cp -r $(MAIN)prt/ $(INSTROOT)/prt
 	@cp -r $(MAIN)QM.VOCLIB/ $(INSTROOT)/QM.VOCLIB
 	@cp -r $(MAIN)\$$SCREENS/ $(INSTROOT)/\$$SCREENS
 	@cp -r $(MAIN)\$$SCREENS.DIC/ $(INSTROOT)/\$$SCREENS.DIC
-	@cp -r $(MAIN)\$$SVLISTS/ $(INSTROOT)/\$$SVLISTS
+	#@cp -r $(MAIN)\$$SVLISTS/ $(INSTROOT)/\$$SVLISTS
 	@cp -r $(MAIN)SYSCOM/ $(INSTROOT)/SYSCOM
 	@chmod 665 $(INSTROOT)/SYSCOM/*
 	@cp -r $(MAIN)terminfo/ $(INSTROOT)/terminfo
@@ -209,8 +209,8 @@ datafiles:
 	@cp -r $(MAIN)VOC/ $(INSTROOT)/VOC
 	@cp -r $(MAIN)VOC.DIC/ $(INSTROOT)/VOC.DIC
 	@chown -R qmsys.qmusers $(INSTROOT)
-	@chmod 775 /usr/qmsys
-	@chmod 775 /usr/qmsys/*
+	@chmod 775 $(INSTROOT)
+	@chmod 775 $(INSTROOT)/*
 	@echo Data file copy completed!
 clean:
 	@$(RM) $(GPLOBJ)*.o
