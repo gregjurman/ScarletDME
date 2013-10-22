@@ -1235,7 +1235,7 @@ void op_procread() {
 
   for (pgm = process.program.prev; pgm != NULL; pgm = pgm->prev) {
     if (!strcmp(
-            ((OBJECT_HEADER *)(pgm->saved_c_base))->ext_hdr.prog.program_name,
+            (const char *)(((OBJECT_HEADER *)(pgm->saved_c_base))->ext_hdr.prog.program_name),
             "$PROC")) {
       is_proc = TRUE;
       break;

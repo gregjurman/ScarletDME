@@ -76,7 +76,7 @@ struct OBJECT_HEADER {
         union {
                struct {
                        int16_t refs;   /* Reference count of loaded object */
-                       int8_t program_name[MAX_PROGRAM_NAME_LEN+1];
+                       char program_name[MAX_PROGRAM_NAME_LEN+1];
                       } prog;
                struct {
                        u_char totals;    /* Number of TOTAL() functions */

@@ -512,7 +512,7 @@ Private bool load_pcode(char *pname, u_char **ptr) {
       return FALSE;
     }
 
-    if (!strcmp(obj->ext_hdr.prog.program_name, u_pname)) /* Found it */
+    if (!strcmp((const char *)(obj->ext_hdr.prog.program_name), u_pname)) /* Found it */
         {
       *ptr = pcode + i;
       return TRUE;

@@ -205,7 +205,7 @@ void pdump() {
   prog_no = 0;
   do {
     fprintf(fu, "===== [%d] Program %s at 0x%08lX (line %d)\n", ++prog_no,
-            ProgramName(pgm->saved_c_base), offset,
+            (const char *)(ProgramName(pgm->saved_c_base)), offset,
             k_line_no(offset, pgm->saved_c_base));
 
     if (pgm->flags) {
