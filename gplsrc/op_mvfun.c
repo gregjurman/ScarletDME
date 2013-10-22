@@ -52,1255 +52,1176 @@ void op_cat(void);
 /* ======================================================================
    op_ifs()  -  IFS opcode                                                */
 
-void op_ifs()
-{
- /* Stack:
-
-     |=============================|=============================|
-     |            BEFORE           |           AFTER             |
-     |=============================|=============================|
- top |  String 2       (arg 3)     | Result                      |
-     |-----------------------------|-----------------------------|
-     |  String 1       (arg 2)     |                             |
-     |-----------------------------|-----------------------------|
-     |  Boolean array  (arg 1)     |                             |
-     |=============================|=============================|
- */
-
- DESCRIPTOR * arg1;        /* arg1 source descriptor */
- bool reuse1;
- short int delimiter1 = 0; /* Last mark character */
- STRING_CHUNK * src1_str;  /* Current chunk */
- short int src1_offset = 0;
- char * src1;
- bool need1;
+void op_ifs() {
+  /* Stack:
  
- DESCRIPTOR * arg2;       /* arg2 source descriptor */
- bool reuse2;
- short int delimiter2 = 0;      /* Last mark character */
- STRING_CHUNK * src2_str; /* Current chunk */
- short int src2_offset = 0;
- char * src2;
- bool need2;
+      |=============================|=============================|
+      |            BEFORE           |           AFTER             |
+      |=============================|=============================|
+  top |  String 2       (arg 3)     | Result                      |
+      |-----------------------------|-----------------------------|
+      |  String 1       (arg 2)     |                             |
+      |-----------------------------|-----------------------------|
+      |  Boolean array  (arg 1)     |                             |
+      |=============================|=============================|
+  */
 
- DESCRIPTOR * arg3;       /* arg3 source descriptor */
- bool reuse3;
- short int delimiter3 = 0;      /* Last mark character */
- STRING_CHUNK * src3_str; /* Current chunk */
- short int src3_offset = 0;
- char * src3;
- bool need3;
+  DESCRIPTOR* arg1; /* arg1 source descriptor */
+  bool reuse1;
+  short int delimiter1 = 0; /* Last mark character */
+  STRING_CHUNK* src1_str;   /* Current chunk */
+  short int src1_offset = 0;
+  char* src1;
+  bool need1;
 
- DESCRIPTOR op_arg1;
- DESCRIPTOR op_arg2;
- DESCRIPTOR op_arg3;
+  DESCRIPTOR* arg2; /* arg2 source descriptor */
+  bool reuse2;
+  short int delimiter2 = 0; /* Last mark character */
+  STRING_CHUNK* src2_str;   /* Current chunk */
+  short int src2_offset = 0;
+  char* src2;
+  bool need2;
 
- STRING_CHUNK * result_str;
- char result_delimiter;
- bool first = TRUE;
+  DESCRIPTOR* arg3; /* arg3 source descriptor */
+  bool reuse3;
+  short int delimiter3 = 0; /* Last mark character */
+  STRING_CHUNK* src3_str;   /* Current chunk */
+  short int src3_offset = 0;
+  char* src3;
+  bool need3;
 
- register char c;
- short int n;
+  DESCRIPTOR op_arg1;
+  DESCRIPTOR op_arg2;
+  DESCRIPTOR op_arg3;
 
- /* Ensure that all three arguments are strings */
+  STRING_CHUNK* result_str;
+  char result_delimiter;
+  bool first = TRUE;
 
- arg3 = e_stack - 1;
- reuse3 = arg3->flags & DF_REUSE;
- k_get_string(arg3);
- src3_str = arg3->data.str.saddr;
+  register char c;
+  short int n;
 
- arg2 = e_stack - 2;
- reuse2 = arg2->flags & DF_REUSE;
- k_get_string(arg2);
- src2_str = arg2->data.str.saddr;
+  /* Ensure that all three arguments are strings */
 
- arg1 = e_stack - 3;
- reuse1 = arg1->flags & DF_REUSE;
- k_get_string(arg1);
- src1_str = arg1->data.str.saddr;
+  arg3 = e_stack - 1;
+  reuse3 = arg3->flags & DF_REUSE;
+  k_get_string(arg3);
+  src3_str = arg3->data.str.saddr;
 
- /* Make descriptors to store substrings */
+  arg2 = e_stack - 2;
+  reuse2 = arg2->flags & DF_REUSE;
+  k_get_string(arg2);
+  src2_str = arg2->data.str.saddr;
 
- InitDescr(&op_arg1, UNASSIGNED);
- InitDescr(&op_arg2, UNASSIGNED);
- InitDescr(&op_arg3, UNASSIGNED);
+  arg1 = e_stack - 3;
+  reuse1 = arg1->flags & DF_REUSE;
+  k_get_string(arg1);
+  src1_str = arg1->data.str.saddr;
 
- /* Place a null string on the stack to accumulate the result */
+  /* Make descriptors to store substrings */
 
- InitDescr(e_stack, STRING);
- (e_stack++)->data.str.saddr = NULL;
+  InitDescr(&op_arg1, UNASSIGNED);
+  InitDescr(&op_arg2, UNASSIGNED);
+  InitDescr(&op_arg3, UNASSIGNED);
 
- while((src1_str != NULL) || (src2_str != NULL) || (src3_str != NULL))
-  {
-   /* Determine which items we need to fetch from the source strings */
+  /* Place a null string on the stack to accumulate the result */
 
-   need1 = (delimiter1 <= delimiter2) && (delimiter1 <= delimiter3);
-   need2 = (delimiter2 <= delimiter1) && (delimiter2 <= delimiter3);
-   need3 = (delimiter3 <= delimiter1) && (delimiter3 <= delimiter2);
+  InitDescr(e_stack, STRING);
+  (e_stack++)->data.str.saddr = NULL;
 
-   if (need1)   
-    {
-     /* Fetch an element of arg1 */
+  while ((src1_str != NULL) || (src2_str != NULL) || (src3_str != NULL)) {
+    /* Determine which items we need to fetch from the source strings */
 
-     k_release(&op_arg1);
-     InitDescr(&op_arg1, STRING);
-     op_arg1.data.str.saddr = NULL;
+    need1 = (delimiter1 <= delimiter2) && (delimiter1 <= delimiter3);
+    need2 = (delimiter2 <= delimiter1) && (delimiter2 <= delimiter3);
+    need3 = (delimiter3 <= delimiter1) && (delimiter3 <= delimiter2);
 
-     delimiter1 = 256;  /* For end of string paths */
-     ts_init(&op_arg1.data.str.saddr, 100);
+    if (need1) {
+      /* Fetch an element of arg1 */
 
-     while(src1_str != NULL)
-      {
-       src1 = src1_str->data + src1_offset;
-       while(src1_offset++ < src1_str->bytes)
-        {
-         c = *(src1++);
-         if (IsMark(c))
-          {
-           delimiter1 = (u_char)c;
-           goto end_item1;
+      k_release(&op_arg1);
+      InitDescr(&op_arg1, STRING);
+      op_arg1.data.str.saddr = NULL;
+
+      delimiter1 = 256; /* For end of string paths */
+      ts_init(&op_arg1.data.str.saddr, 100);
+
+      while (src1_str != NULL) {
+        src1 = src1_str->data + src1_offset;
+        while (src1_offset++ < src1_str->bytes) {
+          c = *(src1++);
+          if (IsMark(c)) {
+            delimiter1 = (u_char) c;
+            goto end_item1;
           }
-         ts_copy_byte(c);
+          ts_copy_byte(c);
         }
-       src1_str = src1_str->next;
-       src1_offset = 0;
+        src1_str = src1_str->next;
+        src1_offset = 0;
       }
-end_item1:
-     ts_terminate();
-    }
-   else /* Reuse or insert default value for item 1 */
-    {
-     if (!reuse1)
-      {
-       k_release(&op_arg1);
-       InitDescr(&op_arg1, STRING);
-       op_arg1.data.str.saddr = NULL;
-      }
-    }
-
-   if (need2)
-    {
-     /* Fetch an element of arg2 */
-
-     k_release(&op_arg2);
-     InitDescr(&op_arg2, STRING);
-     op_arg2.data.str.saddr = NULL;
-
-     delimiter2 = 256;   /* For end of string paths */
-     ts_init(&op_arg2.data.str.saddr, 100);
-
-     while(src2_str != NULL)
-      {
-       src2 = src2_str->data + src2_offset;
-       while(src2_offset++ < src2_str->bytes)
+    end_item1:
+      ts_terminate();
+    } else /* Reuse or insert default value for item 1 */
         {
-         c = *(src2++);
-         if (IsMark(c) && ((u_char)c >= delimiter1))
-          {
-           delimiter2 = (u_char)c;
-           goto end_item2;
+      if (!reuse1) {
+        k_release(&op_arg1);
+        InitDescr(&op_arg1, STRING);
+        op_arg1.data.str.saddr = NULL;
+      }
+    }
+
+    if (need2) {
+      /* Fetch an element of arg2 */
+
+      k_release(&op_arg2);
+      InitDescr(&op_arg2, STRING);
+      op_arg2.data.str.saddr = NULL;
+
+      delimiter2 = 256; /* For end of string paths */
+      ts_init(&op_arg2.data.str.saddr, 100);
+
+      while (src2_str != NULL) {
+        src2 = src2_str->data + src2_offset;
+        while (src2_offset++ < src2_str->bytes) {
+          c = *(src2++);
+          if (IsMark(c) && ((u_char) c >= delimiter1)) {
+            delimiter2 = (u_char) c;
+            goto end_item2;
           }
-         ts_copy_byte(c);
+          ts_copy_byte(c);
         }
-       src2_str = src2_str->next;
-       src2_offset = 0;
+        src2_str = src2_str->next;
+        src2_offset = 0;
       }
-end_item2:
-     ts_terminate();
-    }
-   else /* Reuse or insert default value for item 2 */
-    {
-     if (!reuse2)
-      {
-       k_release(&op_arg2);
-       InitDescr(&op_arg2, STRING);
-       op_arg2.data.str.saddr = NULL;
-      }
-    }
-
-   if (need3)
-    {
-     /* Fetch an element of arg3 */
-
-     k_release(&op_arg3);
-     InitDescr(&op_arg3, STRING);
-     op_arg3.data.str.saddr = NULL;
-
-     delimiter3 = 256;   /* For end of string paths */
-     ts_init(&op_arg3.data.str.saddr, 100);
-
-     while(src3_str != NULL)
-      {
-       src3 = src3_str->data + src3_offset;
-       while(src3_offset++ < src3_str->bytes)
+    end_item2:
+      ts_terminate();
+    } else /* Reuse or insert default value for item 2 */
         {
-         c = *(src3++);
-         if (IsMark(c) && ((u_char)c >= delimiter1))
-          {
-           delimiter3 = (u_char)c;
-           goto end_item3;
+      if (!reuse2) {
+        k_release(&op_arg2);
+        InitDescr(&op_arg2, STRING);
+        op_arg2.data.str.saddr = NULL;
+      }
+    }
+
+    if (need3) {
+      /* Fetch an element of arg3 */
+
+      k_release(&op_arg3);
+      InitDescr(&op_arg3, STRING);
+      op_arg3.data.str.saddr = NULL;
+
+      delimiter3 = 256; /* For end of string paths */
+      ts_init(&op_arg3.data.str.saddr, 100);
+
+      while (src3_str != NULL) {
+        src3 = src3_str->data + src3_offset;
+        while (src3_offset++ < src3_str->bytes) {
+          c = *(src3++);
+          if (IsMark(c) && ((u_char) c >= delimiter1)) {
+            delimiter3 = (u_char) c;
+            goto end_item3;
           }
-         ts_copy_byte(c);
+          ts_copy_byte(c);
         }
-       src3_str = src3_str->next;
-       src3_offset = 0;
+        src3_str = src3_str->next;
+        src3_offset = 0;
       }
-end_item3:
-     ts_terminate();
-    }
-   else /* Reuse or insert default value for item 3 */
-    {
-     if (!reuse3)
-      {
-       k_release(&op_arg3);
-       InitDescr(&op_arg3, STRING);
-       op_arg3.data.str.saddr = NULL;
+    end_item3:
+      ts_terminate();
+    } else /* Reuse or insert default value for item 3 */
+        {
+      if (!reuse3) {
+        k_release(&op_arg3);
+        InitDescr(&op_arg3, STRING);
+        op_arg3.data.str.saddr = NULL;
       }
     }
 
-   /* Insert delimiter */
+    /* Insert delimiter */
 
-   if (!first)
-    {
-     InitDescr(e_stack, STRING);
-     result_str = e_stack->data.str.saddr = s_alloc(1, &n);
-     result_str->ref_ct = 1;
-     result_str->string_len = 1;
-     result_str->bytes = 1;
-     result_str->data[0] = result_delimiter;
-     e_stack++;
+    if (!first) {
+      InitDescr(e_stack, STRING);
+      result_str = e_stack->data.str.saddr = s_alloc(1, &n);
+      result_str->ref_ct = 1;
+      result_str->string_len = 1;
+      result_str->bytes = 1;
+      result_str->data[0] = result_delimiter;
+      e_stack++;
 
-     op_cat();
+      op_cat();
     }
 
-   result_delimiter = (char)min(min(delimiter1, delimiter2), delimiter3);
+    result_delimiter = (char) min(min(delimiter1, delimiter2), delimiter3);
 
-   /* Perform operation */
+    /* Perform operation */
 
-   k_get_bool(&op_arg1);
-   InitDescr(e_stack, ADDR);
-   (e_stack++)->data.d_addr = (op_arg1.data.value)?(&op_arg2):(&op_arg3);
+    k_get_bool(&op_arg1);
+    InitDescr(e_stack, ADDR);
+    (e_stack++)->data.d_addr = (op_arg1.data.value) ? (&op_arg2) : (&op_arg3);
 
-   /* Save result */
+    /* Save result */
 
-   op_cat();
+    op_cat();
 
-   first = FALSE;
+    first = FALSE;
   }
 
- k_release(&op_arg1);
- k_release(&op_arg2);
- k_release(&op_arg3);
+  k_release(&op_arg1);
+  k_release(&op_arg2);
+  k_release(&op_arg3);
 
- /* The stack currently has:
-     Result
-     String 3
-     String 2
-     String 1
-   We need to remove the three source strings */
+  /* The stack currently has:
+      Result
+      String 3
+      String 2
+      String 1
+    We need to remove the three source strings */
 
- k_release(arg1);
- k_release(arg2);
- k_release(arg3);
- *(e_stack - 4) = *(e_stack - 1);
- e_stack -= 3;
+  k_release(arg1);
+  k_release(arg2);
+  k_release(arg3);
+  *(e_stack - 4) = *(e_stack - 1);
+  e_stack -= 3;
 }
 
 /* ======================================================================
    op_mvd()  -  MVD opcode                                                */
 
-void op_mvd()
-{
- /* Stack:
-
-     |=============================|=============================|
-     |            BEFORE           |           AFTER             |
-     |=============================|=============================|
- top |  String                     | Result                      |
-     |=============================|=============================|
- */
-
- u_char opcode;
-
- DESCRIPTOR * arg;         /* Source descriptor */
- short int delimiter = 0;  /* Last mark character */
- STRING_CHUNK * src_str;   /* Current chunk */
- short int src_offset = 0;
- char * src;
+void op_mvd() {
+  /* Stack:
  
- DESCRIPTOR op_arg;
+      |=============================|=============================|
+      |            BEFORE           |           AFTER             |
+      |=============================|=============================|
+  top |  String                     | Result                      |
+      |=============================|=============================|
+  */
 
- STRING_CHUNK * result_str;
- char result_delimiter;
- bool first = TRUE;
+  u_char opcode;
 
- register char c;
- short int n;
+  DESCRIPTOR* arg;         /* Source descriptor */
+  short int delimiter = 0; /* Last mark character */
+  STRING_CHUNK* src_str;   /* Current chunk */
+  short int src_offset = 0;
+  char* src;
 
+  DESCRIPTOR op_arg;
 
- /* Get opcode to execute for each element */
+  STRING_CHUNK* result_str;
+  char result_delimiter;
+  bool first = TRUE;
 
- opcode = *(pc++);
+  register char c;
+  short int n;
 
- /* Ensure that argument is a  string */
+  /* Get opcode to execute for each element */
 
- arg = e_stack - 1;
- k_get_string(arg);
- src_str = arg->data.str.saddr;
+  opcode = *(pc++);
 
- /* Make descriptor to store substrings */
+  /* Ensure that argument is a  string */
 
- InitDescr(&op_arg, UNASSIGNED);
+  arg = e_stack - 1;
+  k_get_string(arg);
+  src_str = arg->data.str.saddr;
 
- /* Place a null string on the stack to accumulate the result */
+  /* Make descriptor to store substrings */
 
- InitDescr(e_stack, STRING);
- (e_stack++)->data.str.saddr = NULL;
+  InitDescr(&op_arg, UNASSIGNED);
 
- do {
-     /* Fetch an element of source string */
+  /* Place a null string on the stack to accumulate the result */
 
-     k_release(&op_arg);
-     InitDescr(&op_arg, STRING);
-     op_arg.data.str.saddr = NULL;
+  InitDescr(e_stack, STRING);
+  (e_stack++)->data.str.saddr = NULL;
 
-     delimiter = 256;  /* For end of string paths */
-     ts_init(&op_arg.data.str.saddr, 100);
+  do {
+    /* Fetch an element of source string */
 
-     while(src_str != NULL)
-      {
-       src = src_str->data + src_offset;
-       while(src_offset++ < src_str->bytes)
-        {
-         c = *(src++);
-         if (IsMark(c))
-          {
-           delimiter = (u_char)c;
-           goto end_item;
-          }
-         ts_copy_byte(c);
+    k_release(&op_arg);
+    InitDescr(&op_arg, STRING);
+    op_arg.data.str.saddr = NULL;
+
+    delimiter = 256; /* For end of string paths */
+    ts_init(&op_arg.data.str.saddr, 100);
+
+    while (src_str != NULL) {
+      src = src_str->data + src_offset;
+      while (src_offset++ < src_str->bytes) {
+        c = *(src++);
+        if (IsMark(c)) {
+          delimiter = (u_char) c;
+          goto end_item;
         }
-       src_str = src_str->next;
-       src_offset = 0;
+        ts_copy_byte(c);
       }
-end_item:
-     ts_terminate();
+      src_str = src_str->next;
+      src_offset = 0;
+    }
+  end_item:
+    ts_terminate();
 
-     /* Insert delimiter */
+    /* Insert delimiter */
 
-     if (!first)
-      {
-       InitDescr(e_stack, STRING);
-       result_str = e_stack->data.str.saddr = s_alloc(1, &n);
-       result_str->ref_ct = 1;
-       result_str->string_len = 1;
-       result_str->bytes = 1;
-       result_str->data[0] = result_delimiter;
-       e_stack++;
+    if (!first) {
+      InitDescr(e_stack, STRING);
+      result_str = e_stack->data.str.saddr = s_alloc(1, &n);
+      result_str->ref_ct = 1;
+      result_str->string_len = 1;
+      result_str->bytes = 1;
+      result_str->data[0] = result_delimiter;
+      e_stack++;
 
-       op_cat();
-      }
+      op_cat();
+    }
 
-     result_delimiter = (char)delimiter;
+    result_delimiter = (char) delimiter;
 
-     /* Perform operation */
+    /* Perform operation */
 
-     InitDescr(e_stack, ADDR);
-     (e_stack++)->data.d_addr = &op_arg;
+    InitDescr(e_stack, ADDR);
+    (e_stack++)->data.d_addr = &op_arg;
 
-     dispatch[opcode]();
+    dispatch[opcode]();
 
-     /* Save result */
+    /* Save result */
 
-     op_cat();
+    op_cat();
 
-     first = FALSE;
-    } while(src_str != NULL);
+    first = FALSE;
+  } while (src_str != NULL);
 
+  k_release(&op_arg);
 
- k_release(&op_arg);
+  /* The stack currently has:
+      Result
+      String
+    We need to remove the source string */
 
- /* The stack currently has:
-     Result
-     String
-   We need to remove the source string */
-
- k_release(arg);
- *(e_stack - 2) = *(e_stack - 1);
- e_stack--;
+  k_release(arg);
+  *(e_stack - 2) = *(e_stack - 1);
+  e_stack--;
 }
 
 /* ======================================================================
    op_mvdd()  -  MVDD opcode                                              */
 
-void op_mvdd()
-{
- /* Stack:
-
-     |=============================|=============================|
-     |            BEFORE           |           AFTER             |
-     |=============================|=============================|
- top |  String 2                   | Result                      |
-     |-----------------------------|-----------------------------|
-     |  String 1                   |                             |
-     |=============================|=============================|
- */
-
- u_char opcode;
-
- DESCRIPTOR * arg1;        /* arg1 source descriptor */
- bool reuse1;
- short int delimiter1 = 0; /* Last mark character */
- STRING_CHUNK * src1_str;  /* Current chunk */
- short int src1_offset = 0;
- char * src1;
- bool need1;
+void op_mvdd() {
+  /* Stack:
  
- DESCRIPTOR * arg2;       /* arg2 source descriptor */
- bool reuse2;
- short int delimiter2 = 0;      /* Last mark character */
- STRING_CHUNK * src2_str; /* Current chunk */
- short int src2_offset = 0;
- char * src2;
- bool need2;
+      |=============================|=============================|
+      |            BEFORE           |           AFTER             |
+      |=============================|=============================|
+  top |  String 2                   | Result                      |
+      |-----------------------------|-----------------------------|
+      |  String 1                   |                             |
+      |=============================|=============================|
+  */
 
- DESCRIPTOR op_arg1;
- DESCRIPTOR op_arg2;
+  u_char opcode;
 
- STRING_CHUNK * result_str;
- char result_delimiter;
- bool first = TRUE;
+  DESCRIPTOR* arg1; /* arg1 source descriptor */
+  bool reuse1;
+  short int delimiter1 = 0; /* Last mark character */
+  STRING_CHUNK* src1_str;   /* Current chunk */
+  short int src1_offset = 0;
+  char* src1;
+  bool need1;
 
- register char c;
- short int n;
+  DESCRIPTOR* arg2; /* arg2 source descriptor */
+  bool reuse2;
+  short int delimiter2 = 0; /* Last mark character */
+  STRING_CHUNK* src2_str;   /* Current chunk */
+  short int src2_offset = 0;
+  char* src2;
+  bool need2;
 
+  DESCRIPTOR op_arg1;
+  DESCRIPTOR op_arg2;
 
- /* Get opcode to execute for each element */
+  STRING_CHUNK* result_str;
+  char result_delimiter;
+  bool first = TRUE;
 
- opcode = *(pc++);
+  register char c;
+  short int n;
 
- /* Ensure that both arguments are strings */
+  /* Get opcode to execute for each element */
 
- arg2 = e_stack - 1;
- reuse2 = arg2->flags & DF_REUSE;
- k_get_string(arg2);
- src2_str = arg2->data.str.saddr;
+  opcode = *(pc++);
 
- arg1 = e_stack - 2;
- reuse1 = arg1->flags & DF_REUSE;
- k_get_string(arg1);
- src1_str = arg1->data.str.saddr;
+  /* Ensure that both arguments are strings */
 
- /* Make descriptors to store substrings */
+  arg2 = e_stack - 1;
+  reuse2 = arg2->flags & DF_REUSE;
+  k_get_string(arg2);
+  src2_str = arg2->data.str.saddr;
 
- InitDescr(&op_arg1, UNASSIGNED);
- InitDescr(&op_arg2, UNASSIGNED);
+  arg1 = e_stack - 2;
+  reuse1 = arg1->flags & DF_REUSE;
+  k_get_string(arg1);
+  src1_str = arg1->data.str.saddr;
 
- /* Place a null string on the stack to accumulate the result */
+  /* Make descriptors to store substrings */
 
- InitDescr(e_stack, STRING);
- (e_stack++)->data.str.saddr = NULL;
+  InitDescr(&op_arg1, UNASSIGNED);
+  InitDescr(&op_arg2, UNASSIGNED);
 
- do {
-     /* Determine which items we need to fetch from the source strings */
+  /* Place a null string on the stack to accumulate the result */
 
-     need1 = (delimiter1 <= delimiter2);
-     need2 = (delimiter1 >= delimiter2);
+  InitDescr(e_stack, STRING);
+  (e_stack++)->data.str.saddr = NULL;
 
-     if (need1)   
-      {
-       /* Fetch an element of arg1 */
+  do {
+    /* Determine which items we need to fetch from the source strings */
 
-       k_release(&op_arg1);
-       InitDescr(&op_arg1, STRING);
-       op_arg1.data.str.saddr = NULL;
+    need1 = (delimiter1 <= delimiter2);
+    need2 = (delimiter1 >= delimiter2);
 
-       delimiter1 = 256;  /* For end of string paths */
-       ts_init(&op_arg1.data.str.saddr, 100);
+    if (need1) {
+      /* Fetch an element of arg1 */
 
-       while(src1_str != NULL)
-        {
-         src1 = src1_str->data + src1_offset;
-         while(src1_offset++ < src1_str->bytes)
-          {
-           c = *(src1++);
-           if (IsMark(c))
-            {
-             delimiter1 = (u_char)c;
-             goto end_item1;
-            }
-           ts_copy_byte(c);
+      k_release(&op_arg1);
+      InitDescr(&op_arg1, STRING);
+      op_arg1.data.str.saddr = NULL;
+
+      delimiter1 = 256; /* For end of string paths */
+      ts_init(&op_arg1.data.str.saddr, 100);
+
+      while (src1_str != NULL) {
+        src1 = src1_str->data + src1_offset;
+        while (src1_offset++ < src1_str->bytes) {
+          c = *(src1++);
+          if (IsMark(c)) {
+            delimiter1 = (u_char) c;
+            goto end_item1;
           }
-         src1_str = src1_str->next;
-         src1_offset = 0;
+          ts_copy_byte(c);
         }
-end_item1:
-       ts_terminate();
+        src1_str = src1_str->next;
+        src1_offset = 0;
       }
-     else /* Reuse or insert default value for item 1 */
-      {
-       if (!reuse1)
+    end_item1:
+      ts_terminate();
+    } else /* Reuse or insert default value for item 1 */
         {
-         k_release(&op_arg1);
-         InitDescr(&op_arg1, STRING);
-         op_arg1.data.str.saddr = NULL;
-        }
+      if (!reuse1) {
+        k_release(&op_arg1);
+        InitDescr(&op_arg1, STRING);
+        op_arg1.data.str.saddr = NULL;
       }
+    }
 
-     if (need2)
-      {
-       /* Fetch an element of arg2 */
+    if (need2) {
+      /* Fetch an element of arg2 */
 
-       k_release(&op_arg2);
-       InitDescr(&op_arg2, STRING);
-       op_arg2.data.str.saddr = NULL;
+      k_release(&op_arg2);
+      InitDescr(&op_arg2, STRING);
+      op_arg2.data.str.saddr = NULL;
 
-       delimiter2 = 256;   /* For end of string paths */
-       ts_init(&op_arg2.data.str.saddr, 100);
+      delimiter2 = 256; /* For end of string paths */
+      ts_init(&op_arg2.data.str.saddr, 100);
 
-       while(src2_str != NULL)
-        {
-         src2 = src2_str->data + src2_offset;
-         while(src2_offset++ < src2_str->bytes)
-          {
-           c = *(src2++);
-           if (IsMark(c))
-            {
-             delimiter2 = (u_char)c;
-             goto end_item2;
-            }
-           ts_copy_byte(c);
+      while (src2_str != NULL) {
+        src2 = src2_str->data + src2_offset;
+        while (src2_offset++ < src2_str->bytes) {
+          c = *(src2++);
+          if (IsMark(c)) {
+            delimiter2 = (u_char) c;
+            goto end_item2;
           }
-         src2_str = src2_str->next;
-         src2_offset = 0;
+          ts_copy_byte(c);
         }
-end_item2:
-       ts_terminate();
+        src2_str = src2_str->next;
+        src2_offset = 0;
       }
-     else /* Reuse or insert default value for item 2 */
-      {
-       if (!reuse2)
+    end_item2:
+      ts_terminate();
+    } else /* Reuse or insert default value for item 2 */
         {
-         k_release(&op_arg2);
-         InitDescr(&op_arg2, STRING);
-         op_arg2.data.str.saddr = NULL;
-        }
+      if (!reuse2) {
+        k_release(&op_arg2);
+        InitDescr(&op_arg2, STRING);
+        op_arg2.data.str.saddr = NULL;
       }
+    }
 
-     /* Insert delimiter */
+    /* Insert delimiter */
 
-     if (!first)
-      {
-       InitDescr(e_stack, STRING);
-       result_str = e_stack->data.str.saddr = s_alloc(1, &n);
-       result_str->ref_ct = 1;
-       result_str->string_len = 1;
-       result_str->bytes = 1;
-       result_str->data[0] = result_delimiter;
-       e_stack++;
+    if (!first) {
+      InitDescr(e_stack, STRING);
+      result_str = e_stack->data.str.saddr = s_alloc(1, &n);
+      result_str->ref_ct = 1;
+      result_str->string_len = 1;
+      result_str->bytes = 1;
+      result_str->data[0] = result_delimiter;
+      e_stack++;
 
-       op_cat();
-      }
+      op_cat();
+    }
 
-     result_delimiter = (char)min(delimiter1, delimiter2);
+    result_delimiter = (char) min(delimiter1, delimiter2);
 
-     /* Perform operation */
+    /* Perform operation */
 
-     InitDescr(e_stack, ADDR);
-     (e_stack++)->data.d_addr = &op_arg1;
-     InitDescr(e_stack, ADDR);
-     (e_stack++)->data.d_addr = &op_arg2;
+    InitDescr(e_stack, ADDR);
+    (e_stack++)->data.d_addr = &op_arg1;
+    InitDescr(e_stack, ADDR);
+    (e_stack++)->data.d_addr = &op_arg2;
 
-     dispatch[opcode]();
+    dispatch[opcode]();
 
-     /* Save result */
+    /* Save result */
 
-     op_cat();
+    op_cat();
 
-     first = FALSE;
-    } while((src1_str != NULL) || (src2_str != NULL));
+    first = FALSE;
+  } while ((src1_str != NULL) || (src2_str != NULL));
 
- k_release(&op_arg1);
- k_release(&op_arg2);
+  k_release(&op_arg1);
+  k_release(&op_arg2);
 
- /* The stack currently has:
-     Result
-     String 2
-     String 1
-   We need to remove the two source strings */
+  /* The stack currently has:
+      Result
+      String 2
+      String 1
+    We need to remove the two source strings */
 
- k_release(arg1);
- k_release(arg2);
- *(e_stack - 3) = *(e_stack - 1);
- e_stack -= 2;
+  k_release(arg1);
+  k_release(arg2);
+  *(e_stack - 3) = *(e_stack - 1);
+  e_stack -= 2;
 }
 
 /* ======================================================================
    op_mvds()  -  MVDS opcode                                              */
 
-void op_mvds()
-{
- /* Stack:
-
-     |=============================|=============================|
-     |            BEFORE           |           AFTER             |
-     |=============================|=============================|
- top |  String 2                   | Result                      |
-     |-----------------------------|-----------------------------|
-     |  Dynamic array              |                             |
-     |=============================|=============================|
- */
-
- u_char opcode;
-
- DESCRIPTOR * arg1;        /* arg1 source descriptor */
- short int delimiter = 0;  /* Last mark character */
- STRING_CHUNK * src1_str;  /* Current chunk */
- short int src1_offset = 0;
- char * src1;
+void op_mvds() {
+  /* Stack:
  
- DESCRIPTOR * arg2;       /* arg2 source descriptor */
+      |=============================|=============================|
+      |            BEFORE           |           AFTER             |
+      |=============================|=============================|
+  top |  String 2                   | Result                      |
+      |-----------------------------|-----------------------------|
+      |  Dynamic array              |                             |
+      |=============================|=============================|
+  */
 
- DESCRIPTOR op_arg1;
+  u_char opcode;
 
- STRING_CHUNK * result_str;
- char result_delimiter;
- bool first = TRUE;
+  DESCRIPTOR* arg1;        /* arg1 source descriptor */
+  short int delimiter = 0; /* Last mark character */
+  STRING_CHUNK* src1_str;  /* Current chunk */
+  short int src1_offset = 0;
+  char* src1;
 
- register char c;
- short int n;
+  DESCRIPTOR* arg2; /* arg2 source descriptor */
 
+  DESCRIPTOR op_arg1;
 
- /* Get opcode to execute for each element */
+  STRING_CHUNK* result_str;
+  char result_delimiter;
+  bool first = TRUE;
 
- opcode = *(pc++);
+  register char c;
+  short int n;
 
- /* Ensure that both arguments are strings */
+  /* Get opcode to execute for each element */
 
- arg2 = e_stack - 1;
- k_get_string(arg2);
+  opcode = *(pc++);
 
- arg1 = e_stack - 2;
- k_get_string(arg1);
- src1_str = arg1->data.str.saddr;
+  /* Ensure that both arguments are strings */
 
- /* Make descriptors to store substring */
+  arg2 = e_stack - 1;
+  k_get_string(arg2);
 
- InitDescr(&op_arg1, UNASSIGNED);
+  arg1 = e_stack - 2;
+  k_get_string(arg1);
+  src1_str = arg1->data.str.saddr;
 
- /* Place a null string on the stack to accumulate the result */
+  /* Make descriptors to store substring */
 
- InitDescr(e_stack, STRING);
- (e_stack++)->data.str.saddr = NULL;
+  InitDescr(&op_arg1, UNASSIGNED);
 
- do {
-     k_release(&op_arg1);
-     InitDescr(&op_arg1, STRING);
-     op_arg1.data.str.saddr = NULL;
+  /* Place a null string on the stack to accumulate the result */
 
-     delimiter = 256;  /* For end of string paths */
-     ts_init(&op_arg1.data.str.saddr, 100);
+  InitDescr(e_stack, STRING);
+  (e_stack++)->data.str.saddr = NULL;
 
-     while(src1_str != NULL)
-      {
-       src1 = src1_str->data + src1_offset;
-       while(src1_offset++ < src1_str->bytes)
-        {
-         c = *(src1++);
-         if (IsMark(c))
-          {
-           delimiter = (u_char)c;
-           goto end_item;
-          }
-         ts_copy_byte(c);
+  do {
+    k_release(&op_arg1);
+    InitDescr(&op_arg1, STRING);
+    op_arg1.data.str.saddr = NULL;
+
+    delimiter = 256; /* For end of string paths */
+    ts_init(&op_arg1.data.str.saddr, 100);
+
+    while (src1_str != NULL) {
+      src1 = src1_str->data + src1_offset;
+      while (src1_offset++ < src1_str->bytes) {
+        c = *(src1++);
+        if (IsMark(c)) {
+          delimiter = (u_char) c;
+          goto end_item;
         }
-       src1_str = src1_str->next;
-       src1_offset = 0;
+        ts_copy_byte(c);
       }
-end_item:
-     ts_terminate();
+      src1_str = src1_str->next;
+      src1_offset = 0;
+    }
+  end_item:
+    ts_terminate();
 
-     /* Insert delimiter */
+    /* Insert delimiter */
 
-     if (!first)
-      {
-       InitDescr(e_stack, STRING);
-       result_str = e_stack->data.str.saddr = s_alloc(1, &n);
-       result_str->ref_ct = 1;
-       result_str->string_len = 1;
-       result_str->bytes = 1;
-       result_str->data[0] = result_delimiter;
-       e_stack++;
+    if (!first) {
+      InitDescr(e_stack, STRING);
+      result_str = e_stack->data.str.saddr = s_alloc(1, &n);
+      result_str->ref_ct = 1;
+      result_str->string_len = 1;
+      result_str->bytes = 1;
+      result_str->data[0] = result_delimiter;
+      e_stack++;
 
-       op_cat();
-      }
+      op_cat();
+    }
 
-     result_delimiter = (char)delimiter;
+    result_delimiter = (char) delimiter;
 
-     /* Perform operation */
+    /* Perform operation */
 
-     InitDescr(e_stack, ADDR);         /* Substring */
-     (e_stack++)->data.d_addr = &op_arg1;
+    InitDescr(e_stack, ADDR); /* Substring */
+    (e_stack++)->data.d_addr = &op_arg1;
 
-     InitDescr(e_stack, ADDR);         /* Copy of second argument */
-     (e_stack++)->data.d_addr = arg2;
+    InitDescr(e_stack, ADDR); /* Copy of second argument */
+    (e_stack++)->data.d_addr = arg2;
 
-     dispatch[opcode]();
+    dispatch[opcode]();
 
-     /* Save result */
+    /* Save result */
 
-     op_cat();
+    op_cat();
 
-     first = FALSE;
-    } while(src1_str != NULL);
+    first = FALSE;
+  } while (src1_str != NULL);
 
- k_release(&op_arg1);
+  k_release(&op_arg1);
 
- /* The stack currently has:
-     Result
-     String 2
-     String 1
-   We need to remove the two source strings */
+  /* The stack currently has:
+      Result
+      String 2
+      String 1
+    We need to remove the two source strings */
 
- k_release(arg1);
- k_release(arg2);
- *(e_stack - 3) = *(e_stack - 1);
- e_stack -= 2;
+  k_release(arg1);
+  k_release(arg2);
+  *(e_stack - 3) = *(e_stack - 1);
+  e_stack -= 2;
 }
 
 /* ======================================================================
    op_mvdss()  -  MVDSS opcode                                            */
 
-void op_mvdss()
-{
- /* Stack:
-
-     |=============================|=============================|
-     |            BEFORE           |           AFTER             |
-     |=============================|=============================|
- top |  String 3                   | Result                      |
-     |-----------------------------|-----------------------------|
-     |  String 2                   |                             |
-     |-----------------------------|-----------------------------|
-     |  Dynamic array              |                             |
-     |=============================|=============================|
- */
-
- u_char opcode;
-
- DESCRIPTOR * arg1;        /* arg1 source descriptor */
- short int delimiter = 0;  /* Last mark character */
- STRING_CHUNK * src1_str;  /* Current chunk */
- short int src1_offset = 0;
- char * src1;
+void op_mvdss() {
+  /* Stack:
  
- DESCRIPTOR * arg2;       /* arg2 source descriptor */
- DESCRIPTOR * arg3;       /* arg3 source descriptor */
+      |=============================|=============================|
+      |            BEFORE           |           AFTER             |
+      |=============================|=============================|
+  top |  String 3                   | Result                      |
+      |-----------------------------|-----------------------------|
+      |  String 2                   |                             |
+      |-----------------------------|-----------------------------|
+      |  Dynamic array              |                             |
+      |=============================|=============================|
+  */
 
- DESCRIPTOR op_arg1;
+  u_char opcode;
 
- STRING_CHUNK * result_str;
- char result_delimiter;
- bool first = TRUE;
+  DESCRIPTOR* arg1;        /* arg1 source descriptor */
+  short int delimiter = 0; /* Last mark character */
+  STRING_CHUNK* src1_str;  /* Current chunk */
+  short int src1_offset = 0;
+  char* src1;
 
- register char c;
- short int n;
+  DESCRIPTOR* arg2; /* arg2 source descriptor */
+  DESCRIPTOR* arg3; /* arg3 source descriptor */
 
+  DESCRIPTOR op_arg1;
 
- /* Get opcode to execute for each element */
+  STRING_CHUNK* result_str;
+  char result_delimiter;
+  bool first = TRUE;
 
- opcode = *(pc++);
+  register char c;
+  short int n;
 
- /* Ensure that all arguments are strings */
+  /* Get opcode to execute for each element */
 
- arg3 = e_stack - 1;
- k_get_string(arg3);
+  opcode = *(pc++);
 
- arg2 = e_stack - 2;
- k_get_string(arg2);
+  /* Ensure that all arguments are strings */
 
- arg1 = e_stack - 3;
- k_get_string(arg1);
- src1_str = arg1->data.str.saddr;
+  arg3 = e_stack - 1;
+  k_get_string(arg3);
 
- /* Make descriptors to store substring */
+  arg2 = e_stack - 2;
+  k_get_string(arg2);
 
- InitDescr(&op_arg1, UNASSIGNED);
+  arg1 = e_stack - 3;
+  k_get_string(arg1);
+  src1_str = arg1->data.str.saddr;
 
- /* Place a null string on the stack to accumulate the result */
+  /* Make descriptors to store substring */
 
- InitDescr(e_stack, STRING);
- (e_stack++)->data.str.saddr = NULL;
+  InitDescr(&op_arg1, UNASSIGNED);
 
- do {
-     k_release(&op_arg1);
-     InitDescr(&op_arg1, STRING);
-     op_arg1.data.str.saddr = NULL;
+  /* Place a null string on the stack to accumulate the result */
 
-     delimiter = 256;  /* For end of string paths */
-     ts_init(&op_arg1.data.str.saddr, 100);
+  InitDescr(e_stack, STRING);
+  (e_stack++)->data.str.saddr = NULL;
 
-     while(src1_str != NULL)
-      {
-       src1 = src1_str->data + src1_offset;
-       while(src1_offset++ < src1_str->bytes)
-        {
-         c = *(src1++);
-         if (IsMark(c))
-          {
-           delimiter = (u_char)c;
-           goto end_item;
-          }
-         ts_copy_byte(c);
+  do {
+    k_release(&op_arg1);
+    InitDescr(&op_arg1, STRING);
+    op_arg1.data.str.saddr = NULL;
+
+    delimiter = 256; /* For end of string paths */
+    ts_init(&op_arg1.data.str.saddr, 100);
+
+    while (src1_str != NULL) {
+      src1 = src1_str->data + src1_offset;
+      while (src1_offset++ < src1_str->bytes) {
+        c = *(src1++);
+        if (IsMark(c)) {
+          delimiter = (u_char) c;
+          goto end_item;
         }
-       src1_str = src1_str->next;
-       src1_offset = 0;
+        ts_copy_byte(c);
       }
-end_item:
-     ts_terminate();
+      src1_str = src1_str->next;
+      src1_offset = 0;
+    }
+  end_item:
+    ts_terminate();
 
-     /* Insert delimiter */
+    /* Insert delimiter */
 
-     if (!first)
-      {
-       InitDescr(e_stack, STRING);
-       result_str = e_stack->data.str.saddr = s_alloc(1, &n);
-       result_str->ref_ct = 1;
-       result_str->string_len = 1;
-       result_str->bytes = 1;
-       result_str->data[0] = result_delimiter;
-       e_stack++;
+    if (!first) {
+      InitDescr(e_stack, STRING);
+      result_str = e_stack->data.str.saddr = s_alloc(1, &n);
+      result_str->ref_ct = 1;
+      result_str->string_len = 1;
+      result_str->bytes = 1;
+      result_str->data[0] = result_delimiter;
+      e_stack++;
 
-       op_cat();
-      }
+      op_cat();
+    }
 
-     result_delimiter = (char)delimiter;
+    result_delimiter = (char) delimiter;
 
-     /* Perform operation */
+    /* Perform operation */
 
-     InitDescr(e_stack, ADDR);         /* Substring */
-     (e_stack++)->data.d_addr = &op_arg1;
+    InitDescr(e_stack, ADDR); /* Substring */
+    (e_stack++)->data.d_addr = &op_arg1;
 
-     InitDescr(e_stack, ADDR);         /* Copy of second argument */
-     (e_stack++)->data.d_addr = arg2;
+    InitDescr(e_stack, ADDR); /* Copy of second argument */
+    (e_stack++)->data.d_addr = arg2;
 
-     InitDescr(e_stack, ADDR);         /* Copy of third argument */
-     (e_stack++)->data.d_addr = arg3;
+    InitDescr(e_stack, ADDR); /* Copy of third argument */
+    (e_stack++)->data.d_addr = arg3;
 
-     dispatch[opcode]();
+    dispatch[opcode]();
 
-     /* Save result */
+    /* Save result */
 
-     op_cat();
+    op_cat();
 
-     first = FALSE;
-    } while(src1_str != NULL);
+    first = FALSE;
+  } while (src1_str != NULL);
 
- k_release(&op_arg1);
+  k_release(&op_arg1);
 
- /* The stack currently has:
-     Result
-     String 3
-     String 2
-     String 1
-   We need to remove the three source strings */
+  /* The stack currently has:
+      Result
+      String 3
+      String 2
+      String 1
+    We need to remove the three source strings */
 
- k_release(arg1);
- k_release(arg2);
- k_release(arg3);
- *(e_stack - 4) = *(e_stack - 1);
- e_stack -= 3;
+  k_release(arg1);
+  k_release(arg2);
+  k_release(arg3);
+  *(e_stack - 4) = *(e_stack - 1);
+  e_stack -= 3;
 }
 
 /* ======================================================================
    op_mvdsss()  -  MVDSSS opcode                                          */
 
-void op_mvdsss()
-{
- /* Stack:
-
-     |=============================|=============================|
-     |            BEFORE           |           AFTER             |
-     |=============================|=============================|
- top |  String 4                   | Result                      |
-     |-----------------------------|-----------------------------|
-     |  String 3                   |                             |
-     |-----------------------------|-----------------------------|
-     |  String 2                   |                             |
-     |-----------------------------|-----------------------------|
-     |  Dynamic array              |                             |
-     |=============================|=============================|
- */
-
- u_char opcode;
-
- DESCRIPTOR * arg1;        /* arg1 source descriptor */
- short int delimiter = 0;  /* Last mark character */
- STRING_CHUNK * src1_str;  /* Current chunk */
- short int src1_offset = 0;
- char * src1;
+void op_mvdsss() {
+  /* Stack:
  
- DESCRIPTOR * arg2;       /* arg2 source descriptor */
- DESCRIPTOR * arg3;       /* arg3 source descriptor */
- DESCRIPTOR * arg4;       /* arg4 source descriptor */
+      |=============================|=============================|
+      |            BEFORE           |           AFTER             |
+      |=============================|=============================|
+  top |  String 4                   | Result                      |
+      |-----------------------------|-----------------------------|
+      |  String 3                   |                             |
+      |-----------------------------|-----------------------------|
+      |  String 2                   |                             |
+      |-----------------------------|-----------------------------|
+      |  Dynamic array              |                             |
+      |=============================|=============================|
+  */
 
- DESCRIPTOR op_arg1;
+  u_char opcode;
 
- STRING_CHUNK * result_str;
- char result_delimiter;
- bool first = TRUE;
+  DESCRIPTOR* arg1;        /* arg1 source descriptor */
+  short int delimiter = 0; /* Last mark character */
+  STRING_CHUNK* src1_str;  /* Current chunk */
+  short int src1_offset = 0;
+  char* src1;
 
- register char c;
- short int n;
+  DESCRIPTOR* arg2; /* arg2 source descriptor */
+  DESCRIPTOR* arg3; /* arg3 source descriptor */
+  DESCRIPTOR* arg4; /* arg4 source descriptor */
 
+  DESCRIPTOR op_arg1;
 
- /* Get opcode to execute for each element */
+  STRING_CHUNK* result_str;
+  char result_delimiter;
+  bool first = TRUE;
 
- opcode = *(pc++);
+  register char c;
+  short int n;
 
- /* Ensure that all arguments are strings */
+  /* Get opcode to execute for each element */
 
- arg4 = e_stack - 1;
- k_get_string(arg4);
+  opcode = *(pc++);
 
- arg3 = e_stack - 2;
- k_get_string(arg3);
+  /* Ensure that all arguments are strings */
 
- arg2 = e_stack - 3;
- k_get_string(arg2);
+  arg4 = e_stack - 1;
+  k_get_string(arg4);
 
- arg1 = e_stack - 4;
- k_get_string(arg1);
- src1_str = arg1->data.str.saddr;
+  arg3 = e_stack - 2;
+  k_get_string(arg3);
 
- /* Make descriptors to store substring */
+  arg2 = e_stack - 3;
+  k_get_string(arg2);
 
- InitDescr(&op_arg1, UNASSIGNED);
+  arg1 = e_stack - 4;
+  k_get_string(arg1);
+  src1_str = arg1->data.str.saddr;
 
- /* Place a null string on the stack to accumulate the result */
+  /* Make descriptors to store substring */
 
- InitDescr(e_stack, STRING);
- (e_stack++)->data.str.saddr = NULL;
+  InitDescr(&op_arg1, UNASSIGNED);
 
- do {
-     k_release(&op_arg1);
-     InitDescr(&op_arg1, STRING);
-     op_arg1.data.str.saddr = NULL;
+  /* Place a null string on the stack to accumulate the result */
 
-     delimiter = 256;  /* For end of string paths */
-     ts_init(&op_arg1.data.str.saddr, 100);
+  InitDescr(e_stack, STRING);
+  (e_stack++)->data.str.saddr = NULL;
 
-     while(src1_str != NULL)
-      {
-       src1 = src1_str->data + src1_offset;
-       while(src1_offset++ < src1_str->bytes)
-        {
-         c = *(src1++);
-         if (IsMark(c))
-          {
-           delimiter = (u_char)c;
-           goto end_item;
-          }
-         ts_copy_byte(c);
+  do {
+    k_release(&op_arg1);
+    InitDescr(&op_arg1, STRING);
+    op_arg1.data.str.saddr = NULL;
+
+    delimiter = 256; /* For end of string paths */
+    ts_init(&op_arg1.data.str.saddr, 100);
+
+    while (src1_str != NULL) {
+      src1 = src1_str->data + src1_offset;
+      while (src1_offset++ < src1_str->bytes) {
+        c = *(src1++);
+        if (IsMark(c)) {
+          delimiter = (u_char) c;
+          goto end_item;
         }
-       src1_str = src1_str->next;
-       src1_offset = 0;
+        ts_copy_byte(c);
       }
-end_item:
-     ts_terminate();
+      src1_str = src1_str->next;
+      src1_offset = 0;
+    }
+  end_item:
+    ts_terminate();
 
-     /* Insert delimiter */
+    /* Insert delimiter */
 
-     if (!first)
-      {
-       InitDescr(e_stack, STRING);
-       result_str = e_stack->data.str.saddr = s_alloc(1, &n);
-       result_str->ref_ct = 1;
-       result_str->string_len = 1;
-       result_str->bytes = 1;
-       result_str->data[0] = result_delimiter;
-       e_stack++;
+    if (!first) {
+      InitDescr(e_stack, STRING);
+      result_str = e_stack->data.str.saddr = s_alloc(1, &n);
+      result_str->ref_ct = 1;
+      result_str->string_len = 1;
+      result_str->bytes = 1;
+      result_str->data[0] = result_delimiter;
+      e_stack++;
 
-       op_cat();
-      }
+      op_cat();
+    }
 
-     result_delimiter = (char)delimiter;
+    result_delimiter = (char) delimiter;
 
-     /* Perform operation */
+    /* Perform operation */
 
-     InitDescr(e_stack, ADDR);         /* Substring */
-     (e_stack++)->data.d_addr = &op_arg1;
+    InitDescr(e_stack, ADDR); /* Substring */
+    (e_stack++)->data.d_addr = &op_arg1;
 
-     InitDescr(e_stack, ADDR);         /* Copy of second argument */
-     (e_stack++)->data.d_addr = arg2;
+    InitDescr(e_stack, ADDR); /* Copy of second argument */
+    (e_stack++)->data.d_addr = arg2;
 
-     InitDescr(e_stack, ADDR);         /* Copy of third argument */
-     (e_stack++)->data.d_addr = arg3;
+    InitDescr(e_stack, ADDR); /* Copy of third argument */
+    (e_stack++)->data.d_addr = arg3;
 
-     InitDescr(e_stack, ADDR);         /* Copy of fourth argument */
-     (e_stack++)->data.d_addr = arg4;
+    InitDescr(e_stack, ADDR); /* Copy of fourth argument */
+    (e_stack++)->data.d_addr = arg4;
 
-     dispatch[opcode]();
+    dispatch[opcode]();
 
-     /* Save result */
+    /* Save result */
 
-     op_cat();
+    op_cat();
 
-     first = FALSE;
-    } while(src1_str != NULL);
+    first = FALSE;
+  } while (src1_str != NULL);
 
- k_release(&op_arg1);
+  k_release(&op_arg1);
 
- /* The stack currently has:
-     Result
-     String 4
-     String 3
-     String 2
-     String 1
-   We need to remove the three source strings */
+  /* The stack currently has:
+      Result
+      String 4
+      String 3
+      String 2
+      String 1
+    We need to remove the three source strings */
 
- k_release(arg1);
- k_release(arg2);
- k_release(arg3);
- k_release(arg4);
- *(e_stack - 5) = *(e_stack - 1);
- e_stack -= 4;
+  k_release(arg1);
+  k_release(arg2);
+  k_release(arg3);
+  k_release(arg4);
+  *(e_stack - 5) = *(e_stack - 1);
+  e_stack -= 4;
 }
 
 /* ======================================================================
    op_substrng()  -  SUBSTRNG opcode                                      */
 
-void op_substrng()
-{
- /* Stack:
+void op_substrng() {
+  /* Stack:
+ 
+      |=============================|=============================|
+      |            BEFORE           |           AFTER             |
+      |=============================|=============================|
+  top |  Length                     |  Result                     |
+      |-----------------------------|-----------------------------|
+      |  Start                      |                             |
+      |-----------------------------|-----------------------------|
+      |  Dynamic array              |                             |
+      |=============================|=============================|
+  */
 
-     |=============================|=============================|
-     |            BEFORE           |           AFTER             |
-     |=============================|=============================|
- top |  Length                     |  Result                     |
-     |-----------------------------|-----------------------------|
-     |  Start                      |                             |
-     |-----------------------------|-----------------------------|
-     |  Dynamic array              |                             |
-     |=============================|=============================|
- */
-
- k_recurse(pcode_substrn, 3);
+  k_recurse(pcode_substrn, 3);
 }
-
 
 /* ======================================================================
    op_splice()  -  SPLCIE opcode                                          */
 
-void op_splice()
-{
- /* Stack:
-
-     |=============================|=============================|
-     |            BEFORE           |           AFTER             |
-     |=============================|=============================|
- top |  Array 2                    | Result                      |
-     |-----------------------------|-----------------------------|
-     |  String                     |                             |
-     |-----------------------------|-----------------------------|
-     |  Array 1                    |                             |
-     |=============================|=============================|
- */
-
- DESCRIPTOR * array1;      /* array1 source descriptor */
- bool reuse1;
- short int delimiter1 = 0; /* Last mark character */
- STRING_CHUNK * src1_str;  /* Current chunk */
- short int src1_offset = 0;
- char * src1;
- bool need1;
+void op_splice() {
+  /* Stack:
  
- DESCRIPTOR * array2;     /* array2 source descriptor */
- bool reuse2;
- short int delimiter2 = 0;      /* Last mark character */
- STRING_CHUNK * src2_str; /* Current chunk */
- short int src2_offset = 0;
- char * src2;
- bool need2;
+      |=============================|=============================|
+      |            BEFORE           |           AFTER             |
+      |=============================|=============================|
+  top |  Array 2                    | Result                      |
+      |-----------------------------|-----------------------------|
+      |  String                     |                             |
+      |-----------------------------|-----------------------------|
+      |  Array 1                    |                             |
+      |=============================|=============================|
+  */
 
- DESCRIPTOR * str_descr;
+  DESCRIPTOR* array1; /* array1 source descriptor */
+  bool reuse1;
+  short int delimiter1 = 0; /* Last mark character */
+  STRING_CHUNK* src1_str;   /* Current chunk */
+  short int src1_offset = 0;
+  char* src1;
+  bool need1;
 
- DESCRIPTOR op_array1;
- DESCRIPTOR op_array2;
+  DESCRIPTOR* array2; /* array2 source descriptor */
+  bool reuse2;
+  short int delimiter2 = 0; /* Last mark character */
+  STRING_CHUNK* src2_str;   /* Current chunk */
+  short int src2_offset = 0;
+  char* src2;
+  bool need2;
 
- STRING_CHUNK * result_str;
- char result_delimiter;
- bool first = TRUE;
+  DESCRIPTOR* str_descr;
 
- register char c;
- short int n;
+  DESCRIPTOR op_array1;
+  DESCRIPTOR op_array2;
 
+  STRING_CHUNK* result_str;
+  char result_delimiter;
+  bool first = TRUE;
 
- /* Ensure that both arrays are strings */
+  register char c;
+  short int n;
 
- array2 = e_stack - 1;
- reuse2 = array2->flags & DF_REUSE;
- k_get_string(array2);
- src2_str = array2->data.str.saddr;
+  /* Ensure that both arrays are strings */
 
- array1 = e_stack - 3;
- reuse1 = array1->flags & DF_REUSE;
- k_get_string(array1);
- src1_str = array1->data.str.saddr;
+  array2 = e_stack - 1;
+  reuse2 = array2->flags & DF_REUSE;
+  k_get_string(array2);
+  src2_str = array2->data.str.saddr;
 
- /* Get interleaved string */
+  array1 = e_stack - 3;
+  reuse1 = array1->flags & DF_REUSE;
+  k_get_string(array1);
+  src1_str = array1->data.str.saddr;
 
- str_descr = e_stack - 2;
- k_get_string(str_descr);
+  /* Get interleaved string */
 
- /* Make descriptors to store substrings */
+  str_descr = e_stack - 2;
+  k_get_string(str_descr);
 
- InitDescr(&op_array1, UNASSIGNED);
- InitDescr(&op_array2, UNASSIGNED);
+  /* Make descriptors to store substrings */
 
- /* Place a null string on the stack to accumulate the result */
+  InitDescr(&op_array1, UNASSIGNED);
+  InitDescr(&op_array2, UNASSIGNED);
 
- InitDescr(e_stack, STRING);
- (e_stack++)->data.str.saddr = NULL;
+  /* Place a null string on the stack to accumulate the result */
 
- while((src1_str != NULL) || (src2_str != NULL))
-  {
-   /* Determine which items we need to fetch from the source strings */
+  InitDescr(e_stack, STRING);
+  (e_stack++)->data.str.saddr = NULL;
 
-   need1 = (delimiter1 <= delimiter2);
-   need2 = (delimiter1 >= delimiter2);
+  while ((src1_str != NULL) || (src2_str != NULL)) {
+    /* Determine which items we need to fetch from the source strings */
 
-   if (need1)   
-    {
-     /* Fetch an element of array1 */
+    need1 = (delimiter1 <= delimiter2);
+    need2 = (delimiter1 >= delimiter2);
 
-     k_release(&op_array1);
-     InitDescr(&op_array1, STRING);
-     op_array1.data.str.saddr = NULL;
+    if (need1) {
+      /* Fetch an element of array1 */
 
-     delimiter1 = 256;  /* For end of string paths */
-     ts_init(&op_array1.data.str.saddr, 100);
+      k_release(&op_array1);
+      InitDescr(&op_array1, STRING);
+      op_array1.data.str.saddr = NULL;
 
-     while(src1_str != NULL)
-      {
-       src1 = src1_str->data + src1_offset;
-       while(src1_offset++ < src1_str->bytes)
-        {
-         c = *(src1++);
-         if (IsMark(c))
-          {
-           delimiter1 = (u_char)c;
-           goto end_item1;
+      delimiter1 = 256; /* For end of string paths */
+      ts_init(&op_array1.data.str.saddr, 100);
+
+      while (src1_str != NULL) {
+        src1 = src1_str->data + src1_offset;
+        while (src1_offset++ < src1_str->bytes) {
+          c = *(src1++);
+          if (IsMark(c)) {
+            delimiter1 = (u_char) c;
+            goto end_item1;
           }
-         ts_copy_byte(c);
+          ts_copy_byte(c);
         }
-       src1_str = src1_str->next;
-       src1_offset = 0;
+        src1_str = src1_str->next;
+        src1_offset = 0;
       }
-end_item1:
-     ts_terminate();
-    }
-   else /* Reuse or insert default value for item 1 */
-    {
-     if (!reuse1)
-      {
-       k_release(&op_array1);
-       InitDescr(&op_array1, STRING);
-       op_array1.data.str.saddr = NULL;
-      }
-    }
-
-   if (need2)
-    {
-     /* Fetch an element of array2 */
-
-     k_release(&op_array2);
-     InitDescr(&op_array2, STRING);
-     op_array2.data.str.saddr = NULL;
-
-     delimiter2 = 256;   /* For end of string paths */
-     ts_init(&op_array2.data.str.saddr, 100);
-
-     while(src2_str != NULL)
-      {
-       src2 = src2_str->data + src2_offset;
-       while(src2_offset++ < src2_str->bytes)
+    end_item1:
+      ts_terminate();
+    } else /* Reuse or insert default value for item 1 */
         {
-         c = *(src2++);
-         if (IsMark(c))
-          {
-           delimiter2 = (u_char)c;
-           goto end_item2;
+      if (!reuse1) {
+        k_release(&op_array1);
+        InitDescr(&op_array1, STRING);
+        op_array1.data.str.saddr = NULL;
+      }
+    }
+
+    if (need2) {
+      /* Fetch an element of array2 */
+
+      k_release(&op_array2);
+      InitDescr(&op_array2, STRING);
+      op_array2.data.str.saddr = NULL;
+
+      delimiter2 = 256; /* For end of string paths */
+      ts_init(&op_array2.data.str.saddr, 100);
+
+      while (src2_str != NULL) {
+        src2 = src2_str->data + src2_offset;
+        while (src2_offset++ < src2_str->bytes) {
+          c = *(src2++);
+          if (IsMark(c)) {
+            delimiter2 = (u_char) c;
+            goto end_item2;
           }
-         ts_copy_byte(c);
+          ts_copy_byte(c);
         }
-       src2_str = src2_str->next;
-       src2_offset = 0;
+        src2_str = src2_str->next;
+        src2_offset = 0;
       }
-end_item2:
-     ts_terminate();
-    }
-   else /* Reuse or insert default value for item 2 */
-    {
-     if (!reuse2)
-      {
-       k_release(&op_array2);
-       InitDescr(&op_array2, STRING);
-       op_array2.data.str.saddr = NULL;
+    end_item2:
+      ts_terminate();
+    } else /* Reuse or insert default value for item 2 */
+        {
+      if (!reuse2) {
+        k_release(&op_array2);
+        InitDescr(&op_array2, STRING);
+        op_array2.data.str.saddr = NULL;
       }
     }
 
-   /* Insert delimiter */
+    /* Insert delimiter */
 
-   if (!first)
-    {
-     InitDescr(e_stack, STRING);
-     result_str = e_stack->data.str.saddr = s_alloc(1, &n);
-     result_str->ref_ct = 1;
-     result_str->string_len = 1;
-     result_str->bytes = 1;
-     result_str->data[0] = result_delimiter;
-     e_stack++;
+    if (!first) {
+      InitDescr(e_stack, STRING);
+      result_str = e_stack->data.str.saddr = s_alloc(1, &n);
+      result_str->ref_ct = 1;
+      result_str->string_len = 1;
+      result_str->bytes = 1;
+      result_str->data[0] = result_delimiter;
+      e_stack++;
 
-     op_cat();
+      op_cat();
     }
 
-   result_delimiter = (char)min(delimiter1, delimiter2);
+    result_delimiter = (char) min(delimiter1, delimiter2);
 
-   /* Perform operation */
+    /* Perform operation */
 
-   InitDescr(e_stack, ADDR);
-   (e_stack++)->data.d_addr = &op_array1;
-   InitDescr(e_stack, ADDR);
-   (e_stack++)->data.d_addr = str_descr;
-   InitDescr(e_stack, ADDR);
-   (e_stack++)->data.d_addr = &op_array2;
+    InitDescr(e_stack, ADDR);
+    (e_stack++)->data.d_addr = &op_array1;
+    InitDescr(e_stack, ADDR);
+    (e_stack++)->data.d_addr = str_descr;
+    InitDescr(e_stack, ADDR);
+    (e_stack++)->data.d_addr = &op_array2;
 
-   op_cat();
-   op_cat();
+    op_cat();
+    op_cat();
 
-   /* Save result */
+    /* Save result */
 
-   op_cat();
+    op_cat();
 
-   first = FALSE;
+    first = FALSE;
   }
 
- k_release(&op_array1);
- k_release(&op_array2);
+  k_release(&op_array1);
+  k_release(&op_array2);
 
- /* The stack currently has:
-     Result
-     Array 2
-     String
-     Array 1
-   We need to remove the three source strings */
+  /* The stack currently has:
+      Result
+      Array 2
+      String
+      Array 1
+    We need to remove the three source strings */
 
- k_release(array1);
- k_release(str_descr);
- k_release(array2);
- *(e_stack - 4) = *(e_stack - 1);
- e_stack -= 3;
+  k_release(array1);
+  k_release(str_descr);
+  k_release(array2);
+  *(e_stack - 4) = *(e_stack - 1);
+  e_stack -= 3;
 }
 
 /* END-CODE */

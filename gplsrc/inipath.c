@@ -36,23 +36,19 @@
 
 /* ====================================================================== */
 
-bool GetConfigPath(inipath)
-   char * inipath;
+bool GetConfigPath(inipath) char* inipath;
 {
- char * p;
+  char* p;
 
- p = getenv("SCARLET_CONFIG");
- if (p != NULL)
-  {
-   strcpy(inipath, p);
-  }
- else
-  {
-   strcpy(inipath, "/etc/scarlet.conf");
+  p = getenv("SCARLET_CONFIG");
+  if (p != NULL) {
+    strcpy(inipath, p);
+  } else {
+    strcpy(inipath, "/etc/scarlet.conf");
 
   }
 
- return TRUE;
+  return TRUE;
 }
 
 /* END-CODE */

@@ -31,55 +31,44 @@
  * START-CODE
  */
 
-   #include <sys/types.h>
+#include <sys/types.h>
 #include "qm.h"
 #include <time.h>
 
-   #define _timezone timezone
-
+#define _timezone timezone
 
 time_t clock_time;
 
 /* ====================================================================== */
 
-long int local_time(void)
-{
- static long int hour = -1;
- struct tm * ltm;
- static int dst;
- long int h;
+long int local_time(void) {
+  static long int hour = -1;
+  struct tm* ltm;
+  static int dst;
+  long int h;
 
- clock_time = time(NULL);
+  clock_time = time(NULL);
 
- /* Because daylight saving time does not take effect at midnight (though
-    the Windows/Linux implementation might), we must reassess whether we
-    are in a daylight saving time period if this call to local_time() is
-    not in the same hour as the previous call.                            */
+  /* Because daylight saving time does not take effect at midnight (though
+     the Windows/Linux implementation might), we must reassess whether we
+     are in a daylight saving time period if this call to local_time() is
+     not in the same hour as the previous call.                            */
 
- h = clock_time / 3600;
- if (h != hour)   /* Must reassess whether we're in daylight saving time */
-  {
-   hour = h;
-   ltm = localtime(&clock_time);
-   dst = (ltm->tm_isdst)?3600:0;
+  h = clock_time / 3600;
+  if (h != hour) /* Must reassess whether we're in daylight saving time */
+      {
+    hour = h;
+    ltm = localtime(&clock_time);
+    dst = (ltm->tm_isdst) ? 3600 : 0;
 
-  } 
+  }
 
-
-
- return clock_time - _timezone + dst;
-
-
-
+  return clock_time - _timezone + dst;
 
 }
 
 /* ====================================================================== */
-   
-long int qmtime()
-{
- return local_time() + (732 * 86400L);
-}
 
+long int qmtime() { return local_time() + (732 * 86400L); }
 
 /* END-CODE */

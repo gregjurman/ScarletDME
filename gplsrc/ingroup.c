@@ -35,81 +35,72 @@
 #include <stdlib.h>
 #include <string.h>
 
-   #include <unistd.h>
-   #include <grp.h>
+#include <unistd.h>
+#include <grp.h>
 
 typedef struct GROUP_INFO GROUP_INFO;
-struct GROUP_INFO
-{
- GROUP_INFO * next;
- short int member;
- char name[1];
+struct GROUP_INFO {
+  GROUP_INFO *next;
+  short int member;
+  char name[1];
 };
 
-static GROUP_INFO * gi_head = NULL;
+static GROUP_INFO *gi_head = NULL;
 
 /* ====================================================================== */
 
-short int in_group(char * group_name)
-{
- short int status = 0;
- GROUP_INFO * gi;
- struct group * grp;
- int group_id;
- static int num_groups = 0;
- gid_t * groups = NULL;
- short int i;
+short int in_group(char *group_name) {
+  short int status = 0;
+  GROUP_INFO *gi;
+  struct group *grp;
+  int group_id;
+  static int num_groups = 0;
+  gid_t *groups = NULL;
+  short int i;
 
- /* Have we already identified membership of this group? */
+  /* Have we already identified membership of this group? */
 
- for(gi = gi_head; gi != NULL; gi = gi->next)
-  {
-   if (!strcmp(group_name, gi->name)) return gi->member;
+  for (gi = gi_head; gi != NULL; gi = gi->next) {
+    if (!strcmp(group_name, gi->name))
+      return gi->member;
   }
 
- /* We do not already know about this one */
+  /* We do not already know about this one */
 
- grp = getgrnam(group_name);
- if (grp != NULL)
-  {
-   group_id = grp->gr_gid;
+  grp = getgrnam(group_name);
+  if (grp != NULL) {
+    group_id = grp->gr_gid;
 
-   if (group_id == getegid())
-    {
-     status = 1;
-    }
-   else    /* Not primary group */
-    {
-     if (groups == NULL)
-      {
-       num_groups = getgroups (0, NULL);
-       groups = (gid_t *) malloc(num_groups * sizeof(gid_t));
-       if (groups != NULL)
+    if (group_id == getegid()) {
+      status = 1;
+    } else /* Not primary group */
         {
-         num_groups = getgroups(num_groups, groups);
+      if (groups == NULL) {
+        num_groups = getgroups(0, NULL);
+        groups = (gid_t *)malloc(num_groups * sizeof(gid_t));
+        if (groups != NULL) {
+          num_groups = getgroups(num_groups, groups);
         }
       }
 
-     for(i = 0; i < num_groups; i++)
-      {
-       if (groups[i] == group_id)
-        {
-         status = 1;
-         break;
+      for (i = 0; i < num_groups; i++) {
+        if (groups[i] == group_id) {
+          status = 1;
+          break;
         }
       }
     }
   }
 
- /* Add this group name to our list of checked names */
+  /* Add this group name to our list of checked names */
 
- gi = (GROUP_INFO *)malloc(sizeof(GROUP_INFO) + strlen(group_name));
- strcpy(gi->name, group_name);
- gi->member = status;
- gi->next = gi_head;
- gi_head = gi;
+  gi = (GROUP_INFO *)malloc(sizeof(GROUP_INFO) + strlen(group_name));
+  strcpy(gi->name, group_name);
+  gi->member = status;
+  gi->next = gi_head;
+  gi_head = gi;
 
- return status;
+  return status;
 }
 
 /* END-CODE */

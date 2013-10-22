@@ -59,206 +59,207 @@
 
 #include "qm.h"
 
-Private char prefix[3+1] = "";   /* Language prefix */
+Private char prefix[3 + 1] = ""; /* Language prefix */
 
-char * month_names[12] = {"January","February","March","April","May","June","July","August","September","October","November","December"};
-char * day_names[7] = {"Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"};
+char *month_names[12] = { "January", "February", "March", "April", "May",
+                          "June", "July", "August", "September", "October",
+                          "November", "December" };
+char *day_names[7] = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+                       "Saturday", "Sunday" };
 
-Private char * message = NULL;
+Private char *message = NULL;
 Private int message_len;
 Private int msg_file = -1;
 
 /* ======================================================================
    Select a language                                                      */
 
-bool load_language(char * language_prefix)
-{
- static bool loaded = FALSE;
- static char * default_months = "January,February,March,April,May,June,July,August,September,October,November,December";
- static char * default_days = "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday";
- char * p;
- short int i;
+bool load_language(char *language_prefix) {
+  static bool loaded = FALSE;
+  static char *default_months = "January,February,March,April,May,June,July,Aug"
+                                "ust,September,October,November,December";
+  static char *default_days =
+      "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday";
+  char *p;
+  short int i;
 
- if (strlen(language_prefix) > 3) return FALSE;
+  if (strlen(language_prefix) > 3)
+    return FALSE;
 
- strcpy(prefix, language_prefix);
+  strcpy(prefix, language_prefix);
 
- if (loaded)  /* Free old memory */
-  {
-   k_free(month_names[0]);
-   k_free(day_names[0]);
+  if (loaded) /* Free old memory */
+      {
+    k_free(month_names[0]);
+    k_free(day_names[0]);
   }
 
- /* Month names */
+  /* Month names */
 
- p = sysmsg(1500);
- if ((*p == '[') || (strdcount(p, ',') != 12)) p = default_months;  /* 0289 */
- month_names[0] = (char *)k_alloc(83, strlen(p) + 1);
- strcpy(month_names[0], p);
- (void)strtok(month_names[0], ",");
- for (i = 1; i < 12; i++) month_names[i] = strtok(NULL, ",");
+  p = sysmsg(1500);
+  if ((*p == '[') || (strdcount(p, ',') != 12))
+    p = default_months; /* 0289 */
+  month_names[0] = (char *)k_alloc(83, strlen(p) + 1);
+  strcpy(month_names[0], p);
+  (void) strtok(month_names[0], ",");
+  for (i = 1; i < 12; i++)
+    month_names[i] = strtok(NULL, ",");
 
- /* Day names */
+  /* Day names */
 
- p = sysmsg(1501);
- if ((*p == '[') || (strdcount(p, ',') != 7)) p = default_days;    /* 0289 */
- day_names[0] = (char *)k_alloc(84, strlen(p) + 1);
- strcpy(day_names[0], p);
- (void)strtok(day_names[0], ",");
- for (i = 1; i < 7; i++) day_names[i] = strtok(NULL, ",");
+  p = sysmsg(1501);
+  if ((*p == '[') || (strdcount(p, ',') != 7))
+    p = default_days; /* 0289 */
+  day_names[0] = (char *)k_alloc(84, strlen(p) + 1);
+  strcpy(day_names[0], p);
+  (void) strtok(day_names[0], ",");
+  for (i = 1; i < 7; i++)
+    day_names[i] = strtok(NULL, ",");
 
- loaded = TRUE;
+  loaded = TRUE;
 
- return TRUE;
+  return TRUE;
 }
 
 /* ======================================================================
    sysmsg()  -  Return message text                                       */
 
-char * sysmsg(int msg_no)
-{
- char id[16];           /* Holds the msg id */
- char path[MAX_PATHNAME_LEN+1]; /* Pathstring of the MESSAGES file or Record */
- int n;                 /* A random tmp var by Ladybridge */
- int msg_rec = -1;           /* The message record FileHandle */
- char * p;
- struct stat msg_stat; /* Holds Dir records files stats */
- int status;
+char *sysmsg(int msg_no) {
+  char id[16];      /* Holds the msg id */
+  char path[MAX_PATHNAME_LEN + 1];
+      /* Pathstring of the MESSAGES file or Record */
+  int n;            /* A random tmp var by Ladybridge */
+  int msg_rec = -1; /* The message record FileHandle */
+  char *p;
+  struct stat msg_stat; /* Holds Dir records files stats */
+  int status;
 
- if (msg_file == -1)
-  {
-   message_len = 128;
-   if (message == NULL) message = (char *)k_alloc(82, message_len);
+  if (msg_file == -1) {
+    message_len = 128;
+    if (message == NULL)
+      message = (char *)k_alloc(82, message_len);
 
-   sprintf(path, "%s%cMESSAGES", sysseg->sysdir, DS);
-   msg_file = open(path, O_RDONLY);
-   if (msg_file < 0)
-    {
-     sprintf(message, "[%d] Message file not found(%d %ld)", 
-             msg_no, dh_err, process.os_error);
-     return message;
+    sprintf(path, "%s%cMESSAGES", sysseg->sysdir, DS);
+    msg_file = open(path, O_RDONLY);
+    if (msg_file < 0) {
+      sprintf(message, "[%d] Message file not found(%d %ld)", msg_no, dh_err,
+              process.os_error);
+      return message;
     }
-   /* close(msg_file); Don't need to keep it open, just checking its there */
+    /* close(msg_file); Don't need to keep it open, just checking its there */
   }
 
- /* Open language specific msg */ 
- if (prefix[0] != '\0')
-  {
-   n = sprintf(id, "%s%d", prefix, msg_no);
-   sprintf(path, "%s%cMESSAGES%c%s", sysseg->sysdir, DS, DS, id);
-   msg_rec = open(path, O_RDONLY);
- }
-
- /* Try English messages */
- if( msg_rec < 0 )  
-  {
-   n = sprintf(id, "%d", msg_no);
-   sprintf(path, "%s%cMESSAGES%c%s", sysseg->sysdir, DS, DS, id);
-   msg_rec = open(path, O_RDONLY);
+  /* Open language specific msg */
+  if (prefix[0] != '\0') {
+    n = sprintf(id, "%s%d", prefix, msg_no);
+    sprintf(path, "%s%cMESSAGES%c%s", sysseg->sysdir, DS, DS, id);
+    msg_rec = open(path, O_RDONLY);
   }
 
- if( msg_rec >= 0)
-  {
-   /* Get size of record to come */   
-   status = fstat(msg_rec, &msg_stat);
-   int msg_size = msg_stat.st_size;
+  /* Try English messages */
+  if (msg_rec < 0) {
+    n = sprintf(id, "%d", msg_no);
+    sprintf(path, "%s%cMESSAGES%c%s", sysseg->sysdir, DS, DS, id);
+    msg_rec = open(path, O_RDONLY);
+  }
 
-   /* Check buffer size */
-   if (msg_size > message_len)         /* Must increase buffer size */
-    {
-     k_free(message);                 /* Release old buffer */
+  if (msg_rec >= 0) {
+    /* Get size of record to come */
+    status = fstat(msg_rec, &msg_stat);
+    int msg_size = msg_stat.st_size;
 
-     n = (msg_size & ~127) + ((msg_size & 127)?128:0);  /* Round to multiple of 128 bytes */
-     message = (char *)k_alloc(82, n);
-     message_len = n;
+    /* Check buffer size */
+    if (msg_size > message_len) /* Must increase buffer size */
+        {
+      k_free(message); /* Release old buffer */
+
+      n = (msg_size & ~127) + ((msg_size & 127) ? 128 : 0);
+          /* Round to multiple of 128 bytes */
+      message = (char *)k_alloc(82, n);
+      message_len = n;
     }
 
-    /* Read message rec */ 
+    /* Read message rec */
     status = read(msg_rec, message, msg_size);
     message[msg_size] = '\0';
-   /*printf("FILE (%s) %d\n", path, msg_size);*/
+    /*printf("FILE (%s) %d\n", path, msg_size);*/
   }
- 
- if (msg_rec < 0 || status < 0) /* Either open or read failed */
-  {
-   sprintf(message, "[%s] Message not found", id);
-  }
-  
 
- /* Replace any embedded newline and tab codes */
- p = message;
- while((p = strchr(p, '\\')) != NULL)
-  {
-   switch(*(p+1))
-    {
-     case 'n':
+  if (msg_rec < 0 || status < 0) /* Either open or read failed */
+      {
+    sprintf(message, "[%s] Message not found", id);
+  }
+
+  /* Replace any embedded newline and tab codes */
+  p = message;
+  while ((p = strchr(p, '\\')) != NULL) {
+    switch (*(p + 1)) {
+      case 'n':
         *p = '\n';
-        strcpy(p+1, p+2);
+        strcpy(p + 1, p + 2);
         break;
-     case 't':
+      case 't':
         *p = '\t';
-        strcpy(p+1, p+2);
+        strcpy(p + 1, p + 2);
         break;
     }
-   p++;
+    p++;
   }
 
- return message;
+  return message;
 }
 
 /* ======================================================================
    op_sysmsg()  -  Return message text to QMBasic program                 */
 
-void op_sysmsg()
-{
- /* Stack:
+void op_sysmsg() {
+  /* Stack:
+ 
+      |================================|=============================|
+      |            BEFORE              |           AFTER             |
+      |================================|=============================|
+  top |  Arguments (perhaps)           | Message text                |
+      |--------------------------------|-----------------------------|
+      |  Key                           |                             |
+      |================================|=============================|
+ 
+      Opcode is followed by single byte argument count
+ */
 
-     |================================|=============================|
-     |            BEFORE              |           AFTER             |
-     |================================|=============================|
- top |  Arguments (perhaps)           | Message text                |
-     |--------------------------------|-----------------------------|
-     |  Key                           |                             |
-     |================================|=============================|
+  DESCRIPTOR *descr;
+  short int arg_ct;
+  int saved_process_status;
+  int saved_os_error;
+  char *msg;
 
-     Opcode is followed by single byte argument count
-*/
+  saved_process_status = process.status;
+  saved_os_error = process.os_error;
 
- DESCRIPTOR * descr;
- short int arg_ct;
- int saved_process_status;
- int saved_os_error;
- char * msg;
+  arg_ct = *(pc++);
 
- saved_process_status = process.status;
- saved_os_error = process.os_error;
+  /* Replace stack entry for key with skeleton message text */
 
- arg_ct = *(pc++);
+  descr = e_stack - (1 + arg_ct);
+  GetNum(descr);
+  msg = sysmsg(descr->data.value);
+  k_put_c_string(msg, descr);
 
- /* Replace stack entry for key with skeleton message text */
+  if ((strchr(msg, '%') != NULL) || arg_ct) /* Need to substitute arguments */
+      {
+    /* Add null strings to take us to four arguments */
 
- descr = e_stack - (1 + arg_ct);
- GetNum(descr);
- msg = sysmsg(descr->data.value);
- k_put_c_string(msg, descr);
-
- if ((strchr(msg, '%') != NULL) || arg_ct)  /* Need to substitute arguments */
-  {
-   /* Add null strings to take us to four arguments */
-
-   while(arg_ct++ < 4)
-    {
-     InitDescr(e_stack, STRING);
-     (e_stack++)->data.str.saddr = NULL;
+    while (arg_ct++ < 4) {
+      InitDescr(e_stack, STRING);
+      (e_stack++)->data.str.saddr = NULL;
     }
 
-   InitDescr(e_stack, INTEGER);
-   (e_stack++)->data.value = saved_process_status;
+    InitDescr(e_stack, INTEGER);
+    (e_stack++)->data.value = saved_process_status;
 
-   InitDescr(e_stack, INTEGER);
-   (e_stack++)->data.value = saved_os_error;
+    InitDescr(e_stack, INTEGER);
+    (e_stack++)->data.value = saved_os_error;
 
-   k_recurse(pcode_msgargs,7);   /* Execute recursive to do substitution */
+    k_recurse(pcode_msgargs, 7); /* Execute recursive to do substitution */
   }
 }
 

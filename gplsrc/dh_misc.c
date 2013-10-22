@@ -42,416 +42,392 @@
 #include "dh_int.h"
 #include "keys.h"
 
-
 /* ======================================================================
    op_fcontrol()  -  Miscellaneous file control functions                 */
 
-void op_fcontrol()
-{
- /* Stack:
+void op_fcontrol() {
+  /* Stack:
+ 
+      |================================|=============================|
+      |            BEFORE              |           AFTER             |
+      |================================|=============================|
+  top |  Qualifier                     | Returned data               |
+      |--------------------------------|-----------------------------|
+      |  Action key                    |                             |
+      |--------------------------------|-----------------------------|
+      |  File variable                 |                             |
+      |================================|=============================|
+ 
+  This function is restricted for internal use only and therefore assumes
+  that the caller knows what they are doing. There is minimal validation.
+ 
+  Key   Action                                      Qualifier
+    1   Set journalling file no in file header      File number
+    2   Disable journalling for an open file
+    3   Set akpath element of file header           Path name
+    4   Set file as non-transactional
+    5   Force resize
+    6   Set/clear DHF_NO_RESIZE flag                New setting
+ */
 
-     |================================|=============================|
-     |            BEFORE              |           AFTER             |
-     |================================|=============================|
- top |  Qualifier                     | Returned data               |
-     |--------------------------------|-----------------------------|
-     |  Action key                    |                             |
-     |--------------------------------|-----------------------------|
-     |  File variable                 |                             |
-     |================================|=============================|
+  DESCRIPTOR *descr;
+  int action;
+  FILE_VAR *fvar;
+  DESCRIPTOR result;
+  DH_FILE *dh_file;
+  DH_HEADER header;
+  long int modulus;
+  long int load;
+  FILE_ENTRY *fptr;
+  short int header_lock;
+  u_char ftype;
+  bool dynamic;
 
- This function is restricted for internal use only and therefore assumes
- that the caller knows what they are doing. There is minimal validation.
+  process.status = 0;
 
- Key   Action                                      Qualifier
-   1   Set journalling file no in file header      File number
-   2   Disable journalling for an open file
-   3   Set akpath element of file header           Path name
-   4   Set file as non-transactional
-   5   Force resize
-   6   Set/clear DHF_NO_RESIZE flag                New setting
-*/
+  InitDescr(&result, INTEGER); /* Assume integer return value by default */
+  result.data.value = 0;
 
- DESCRIPTOR * descr;
- int action;
- FILE_VAR * fvar;
- DESCRIPTOR result;
- DH_FILE * dh_file;
- DH_HEADER header;
- long int modulus;
- long int load;
- FILE_ENTRY * fptr;
- short int header_lock;
- u_char ftype;
- bool dynamic;
+  /* Get action key */
 
- process.status = 0;
+  descr = e_stack - 2;
+  GetInt(descr);
+  action = descr->data.value;
 
- InitDescr(&result, INTEGER); /* Assume integer return value by default */
- result.data.value = 0;
+  /* Get file variable */
 
- /* Get action key */
+  descr = e_stack - 3;
+  k_get_file(descr);
+  fvar = descr->data.fvar;
+  fptr = FPtr(fvar->file_id);
+  ftype = fvar->type;
+  dynamic = (ftype == DYNAMIC_FILE);
+  dh_file = fvar->access.dh.dh_file; /* May be irrelevant */
 
- descr = e_stack - 2;
- GetInt(descr);
- action = descr->data.value;
+  /* Resolve value of qualifier */
 
- /* Get file variable */
+  descr = e_stack - 1;
+  k_get_value(descr);
 
- descr = e_stack - 3;
- k_get_file(descr);
- fvar = descr->data.fvar;
- fptr = FPtr(fvar->file_id);
- ftype = fvar->type;
- dynamic = (ftype == DYNAMIC_FILE);
- dh_file = fvar->access.dh.dh_file;   /* May be irrelevant */
-
- /* Resolve value of qualifier */
-
- descr = e_stack - 1;
- k_get_value(descr);
-
- switch(action)
-  {
-   case FC_SET_JNL_FNO:           /* Set jnl_fno field of file header */
+  switch (action) {
+    case FC_SET_JNL_FNO: /* Set jnl_fno field of file header */
       GetInt(descr);
 
       /* Read file header - We have exclusive access so needn't lock */
 
       if (!dh_read_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
-                         DH_HEADER_SIZE))
-       {
+                         DH_HEADER_SIZE)) {
         process.status = ER_IOE;
         goto exit_op_fcontrol;
-       }
+      }
 
       header.jnl_fno = descr->data.value;
       dh_file->jnl_fno = descr->data.value;
 
       if (!dh_write_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
-                             DH_HEADER_SIZE))
-       {
+                          DH_HEADER_SIZE)) {
         process.status = ER_IOE;
         goto exit_op_fcontrol;
-       }
+      }
 
       result.data.value = 1;
       break;
 
-   case FC_KILL_JNL:
-      dh_file->jnl_fno = 0;  /* Kill journalling */
+    case FC_KILL_JNL:
+      dh_file->jnl_fno = 0; /* Kill journalling */
       break;
 
-   case FC_SET_AKPATH:
+    case FC_SET_AKPATH:
       /* Read file header - We have exclusive access so needn't lock */
 
       if (!dh_read_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
-                         DH_HEADER_SIZE))
-       {
+                         DH_HEADER_SIZE)) {
         process.status = ER_IOE;
         goto exit_op_fcontrol;
-       }
+      }
 
       k_get_c_string(descr, header.akpath, MAX_PATHNAME_LEN);
 #ifdef CASE_INSENSITIVE_FILE_SYSTEM
       UpperCaseString(header.akpath);
 #endif
 
-      if (header.akpath[0] == '\0') dh_file->akpath = NULL;
-      else
-       {
+      if (header.akpath[0] == '\0')
+        dh_file->akpath = NULL;
+      else {
         dh_file->akpath = (char *)k_alloc(107, strlen(header.akpath) + 1);
         strcpy(dh_file->akpath, header.akpath);
-       }
-      
+      }
+
       if (!dh_write_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
-                             DH_HEADER_SIZE))
-       {
+                          DH_HEADER_SIZE)) {
         process.status = ER_IOE;
         goto exit_op_fcontrol;
-       }
+      }
       break;
 
-   case FC_NON_TXN:    /* Set file as non-transactional */
+    case FC_NON_TXN: /* Set file as non-transactional */
       fvar->flags |= FV_NON_TXN;
       break;
 
-   case FC_SPLIT_MERGE:    /* Force split/merge */
-      if (fvar->type == DYNAMIC_FILE)
-       {
+    case FC_SPLIT_MERGE: /* Force split/merge */
+      if (fvar->type == DYNAMIC_FILE) {
         modulus = fptr->params.modulus;
         load = DHLoad(fptr->params.load_bytes, dh_file->group_size, modulus);
 
-        if ((load > fptr->params.split_load)
-           || (modulus < fptr->params.min_modulus))
-         {
+        if ((load > fptr->params.split_load) ||
+            (modulus < fptr->params.min_modulus)) {
           dh_split(dh_file);
           result.data.value = TRUE;
-         }
-        else if ((load < fptr->params.merge_load) 
-                && (modulus > fptr->params.min_modulus))
-         {
+        } else if ((load < fptr->params.merge_load) &&
+                   (modulus > fptr->params.min_modulus)) {
           /* Looks like we need to merge but check won't immediately split */
-          load = DHLoad(fptr->params.load_bytes, dh_file->group_size, modulus - 1);
-          if (load < fptr->params.split_load)  /* Would not immediately split */
-           {
+          load =
+              DHLoad(fptr->params.load_bytes, dh_file->group_size, modulus - 1);
+          if (load < fptr->params.split_load) /* Would not immediately split */
+              {
             dh_merge(dh_file);
             result.data.value = TRUE;
-           }
-         }
-       }
+          }
+        }
+      }
       break;
 
-   case FC_NO_RESIZE:    /* Set/clear DHF_NO_RESIZE flag */
-      if (fvar->type == DYNAMIC_FILE)
-       {
+    case FC_NO_RESIZE: /* Set/clear DHF_NO_RESIZE flag */
+      if (fvar->type == DYNAMIC_FILE) {
         GetInt(descr);
         header_lock = GetGroupWriteLock(dh_file, 0);
 
         if (!dh_read_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
-                           DH_HEADER_SIZE))
-         {
+                           DH_HEADER_SIZE)) {
           process.status = ER_IOE;
           goto exit_op_fcontrol;
-         }
+        }
 
-        if (descr->data.value)
-         {
+        if (descr->data.value) {
           fptr->flags |= DHF_NO_RESIZE;
           header.flags |= DHF_NO_RESIZE;
-         }
-        else
-         {
+        } else {
           fptr->flags &= ~DHF_NO_RESIZE;
           header.flags &= ~DHF_NO_RESIZE;
-         }
+        }
 
         if (!dh_write_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
-                            DH_HEADER_SIZE))
-         {
+                            DH_HEADER_SIZE)) {
           process.status = ER_IOE;
           goto exit_op_fcontrol;
-         }
+        }
 
         FreeGroupWriteLock(header_lock);
-       }
+      }
       break;
 
   }
 
 exit_op_fcontrol:
- k_dismiss();
- k_dismiss();
- k_dismiss();
+  k_dismiss();
+  k_dismiss();
+  k_dismiss();
 
- *(e_stack++) = result;   /* Move result descriptor to stack */
+  *(e_stack++) = result; /* Move result descriptor to stack */
 }
-
 
 /* ======================================================================
    op_grpstat()  -  Return information about a file group                 */
 
-void op_grpstat()
-{
- /* Stack:
+void op_grpstat() {
+  /* Stack:
+ 
+      |================================|=============================|
+      |            BEFORE              |           AFTER             |
+      |================================|=============================|
+  top |  Group number                  | Information                 |
+      |--------------------------------|-----------------------------|
+      |  ADDR to file variable         |                             |
+      |================================|=============================|
+ 
+  Returns:
+     F1    Bytes used (excluding large records but including group headers)
+     F2    Group buffer chain length
+     F3    Record count (including large records)
+     F4    Large record count
+  */
 
-     |================================|=============================|
-     |            BEFORE              |           AFTER             |
-     |================================|=============================|
- top |  Group number                  | Information                 |
-     |--------------------------------|-----------------------------| 
-     |  ADDR to file variable         |                             |
-     |================================|=============================|
+  DESCRIPTOR *descr;
+  FILE_VAR *fvar;
+  DH_FILE *dh_file;
+  FILE_ENTRY *fptr;
+  long int group;
+  short int group_bytes;
+  short int used_bytes;
+  char result[50] = "";
+  short int lock_slot = 0;
+  short int subfile;
+  long int grp;
+  short int rec_offset;
+  DH_RECORD *rec_ptr;
+  long int byte_count = 0;
+  short int buffer_count = 0;
+  short int record_count = 0;
+  long int large_record_count = 0;
 
- Returns:
-    F1    Bytes used (excluding large records but including group headers)
-    F2    Group buffer chain length
-    F3    Record count (including large records)
-    F4    Large record count
- */
+  /* Get group number */
 
- DESCRIPTOR * descr;
- FILE_VAR * fvar;
- DH_FILE * dh_file;
- FILE_ENTRY * fptr;
- long int group;
- short int group_bytes;
- short int used_bytes;
- char result[50] = "";
- short int lock_slot = 0;
- short int subfile;
- long int grp;
- short int rec_offset;
- DH_RECORD * rec_ptr;
- long int byte_count = 0;
- short int buffer_count = 0;
- short int record_count = 0;
- long int large_record_count = 0;
+  descr = e_stack - 1;
+  GetInt(descr);
+  group = descr->data.value;
 
+  /* Get file variable */
 
- /* Get group number */
+  descr = e_stack - 2;
+  k_get_file(descr);
+  fvar = descr->data.fvar;
+  if (fvar->type != DYNAMIC_FILE)
+    goto exit_op_grpstat;
 
- descr = e_stack - 1;
- GetInt(descr);
- group = descr->data.value;
+  dh_file = fvar->access.dh.dh_file;
 
- /* Get file variable */
+  fptr = FPtr(dh_file->file_id);
+  while (fptr->file_lock < 0)
+    Sleep(1000); /* Clearfile in progress */
 
- descr = e_stack - 2;
- k_get_file(descr);
- fvar = descr->data.fvar;
- if (fvar->type != DYNAMIC_FILE) goto exit_op_grpstat;
+  /* Lock group */
 
- dh_file = fvar->access.dh.dh_file;
+  StartExclusive(FILE_TABLE_LOCK, 39);
+  lock_slot = GetGroupReadLock(dh_file, group);
+  EndExclusive(FILE_TABLE_LOCK);
 
- fptr = FPtr(dh_file->file_id);
- while(fptr->file_lock < 0) Sleep(1000); /* Clearfile in progress */
+  group_bytes = (short int)(dh_file->group_size);
 
- /* Lock group */
+  subfile = PRIMARY_SUBFILE;
+  grp = group;
+  do {
+    /* Read group */
 
- StartExclusive(FILE_TABLE_LOCK, 39);
- lock_slot = GetGroupReadLock(dh_file, group);
- EndExclusive(FILE_TABLE_LOCK);
+    if (!dh_read_group(dh_file, subfile, grp, dh_buffer, group_bytes)) {
+      goto exit_op_grpstat;
+    }
 
- group_bytes = (short int)(dh_file->group_size);
+    /* Scan group buffer for records */
 
- subfile = PRIMARY_SUBFILE;
- grp = group;
- do {
-     /* Read group */
+    used_bytes = ((DH_BLOCK *)dh_buffer)->used_bytes;
+    if ((used_bytes == 0) || (used_bytes > group_bytes)) {
+      goto exit_op_grpstat;
+    }
 
-     if (!dh_read_group(dh_file, subfile, grp, dh_buffer, group_bytes))
-      {
-       goto exit_op_grpstat;
-      }
+    buffer_count++;
+    byte_count += used_bytes;
 
-     /* Scan group buffer for records */
+    rec_offset = offsetof(DH_BLOCK, record);
+    while (rec_offset < used_bytes) {
+      rec_ptr = (DH_RECORD *)(dh_buffer + rec_offset);
+      record_count++;
+      if (rec_ptr->flags & DH_BIG_REC)
+        large_record_count++;
 
-     used_bytes = ((DH_BLOCK *)dh_buffer)->used_bytes;
-     if ((used_bytes == 0) || (used_bytes > group_bytes))
-      {
-       goto exit_op_grpstat;
-      }
+      rec_offset += rec_ptr->next;
+    }
 
-     buffer_count++;
-     byte_count += used_bytes;
+    /* Move to next group buffer */
 
-     rec_offset = offsetof(DH_BLOCK, record);
-     while(rec_offset < used_bytes)
-      {
-       rec_ptr = (DH_RECORD *)(dh_buffer + rec_offset);
-       record_count++;
-       if (rec_ptr->flags & DH_BIG_REC) large_record_count++;
+    subfile = OVERFLOW_SUBFILE;
+    grp = GetFwdLink(dh_file, ((DH_BLOCK *)dh_buffer)->next);
+  } while (grp != 0);
 
-       rec_offset += rec_ptr->next;
-      }
+  /* Construct return data */
 
-     /* Move to next group buffer */
-
-     subfile = OVERFLOW_SUBFILE;
-     grp = GetFwdLink(dh_file, ((DH_BLOCK *)dh_buffer)->next);
-    } while(grp != 0);
-
- /* Construct return data */
-
- sprintf(result, "%ld%c%d%c%d%c%ld",
-         byte_count, FIELD_MARK,
-         (int)buffer_count, FIELD_MARK,
-         (int)record_count, FIELD_MARK,
-         large_record_count);
+  sprintf(result, "%ld%c%d%c%d%c%ld", byte_count, FIELD_MARK,
+          (int) buffer_count, FIELD_MARK, (int) record_count, FIELD_MARK,
+          large_record_count);
 
 exit_op_grpstat:
- if (lock_slot != 0) FreeGroupReadLock(lock_slot);
+  if (lock_slot != 0)
+    FreeGroupReadLock(lock_slot);
 
- k_pop(1);
- k_dismiss();
+  k_pop(1);
+  k_dismiss();
 
-/* Set string return value on stack */
+  /* Set string return value on stack */
 
- k_put_c_string(result, e_stack++);
+  k_put_c_string(result, e_stack++);
 }
 
 /* ======================================================================
    op_settrig()  - Set trigger name                                       */
 
-void op_settrig()
-{
- /* Stack:
+void op_settrig() {
+  /* Stack:
+ 
+      |================================|=============================|
+      |            BEFORE              |           AFTER             |
+      |================================|=============================|
+  top |  Mode flags                    |                             |
+      |--------------------------------|-----------------------------|
+      |  Function name                 |                             |
+      |--------------------------------|-----------------------------|
+      |  File variable                 |                             |
+      |================================|=============================|
+ */
 
-     |================================|=============================|
-     |            BEFORE              |           AFTER             |
-     |================================|=============================|
- top |  Mode flags                    |                             |
-     |--------------------------------|-----------------------------|
-     |  Function name                 |                             |
-     |--------------------------------|-----------------------------|
-     |  File variable                 |                             |
-     |================================|=============================|
-*/
+  DESCRIPTOR *descr;
+  char call_name[MAX_TRIGGER_NAME_LEN + 1];
+  short int name_len;
+  FILE_VAR *fvar;
+  DH_FILE *dh_file;
+  DH_HEADER header;
+  int modes;
 
- DESCRIPTOR * descr;
- char call_name[MAX_TRIGGER_NAME_LEN+1];
- short int name_len;
- FILE_VAR * fvar;
- DH_FILE * dh_file;
- DH_HEADER header;
- int modes;
+  process.status = 0;
 
- process.status = 0;
+  /* Get mode flags */
 
- /* Get mode flags */
+  descr = e_stack - 1;
+  GetNum(descr);
+  modes = descr->data.value;
 
- descr = e_stack - 1;
- GetNum(descr);
- modes = descr->data.value;
+  /* Get function name */
 
- /* Get function name */
-
- descr = e_stack - 2;
- name_len = k_get_c_string(descr, call_name, MAX_TRIGGER_NAME_LEN);
- if ((name_len < 0) || (name_len && !valid_call_name(call_name)))
-  {
-   process.status = ER_IID;
-   goto exit_op_settrig;
+  descr = e_stack - 2;
+  name_len = k_get_c_string(descr, call_name, MAX_TRIGGER_NAME_LEN);
+  if ((name_len < 0) || (name_len && !valid_call_name(call_name))) {
+    process.status = ER_IID;
+    goto exit_op_settrig;
   }
 
- /* Get file variable */
+  /* Get file variable */
 
- descr = e_stack - 3;
- k_get_file(descr);
- fvar = descr->data.fvar;
- if (fvar->type != DYNAMIC_FILE)
-  {
-   process.status = ER_NDYN;
-   goto exit_op_settrig;
+  descr = e_stack - 3;
+  k_get_file(descr);
+  fvar = descr->data.fvar;
+  if (fvar->type != DYNAMIC_FILE) {
+    process.status = ER_NDYN;
+    goto exit_op_settrig;
   }
 
- dh_file= fvar->access.dh.dh_file;
+  dh_file = fvar->access.dh.dh_file;
 
- /* Read file header - We have exclusive access so needn't lock */
+  /* Read file header - We have exclusive access so needn't lock */
 
- if (!dh_read_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
-                          DH_HEADER_SIZE))
-  {
-   process.status = ER_IOE;
-   goto exit_op_settrig;
+  if (!dh_read_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
+                     DH_HEADER_SIZE)) {
+    process.status = ER_IOE;
+    goto exit_op_settrig;
   }
 
- memset(header.trigger_name, 0, MAX_TRIGGER_NAME_LEN);  /* Wipe out completely */
- strcpy(header.trigger_name, call_name);
- header.trigger_modes = modes;
+  memset(header.trigger_name, 0, MAX_TRIGGER_NAME_LEN);
+      /* Wipe out completely */
+  strcpy(header.trigger_name, call_name);
+  header.trigger_modes = modes;
 
- if (!dh_write_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
-                        DH_HEADER_SIZE))
-  {
-   process.status = ER_IOE;
-   goto exit_op_settrig;
+  if (!dh_write_group(dh_file, PRIMARY_SUBFILE, 0, (char *)&header,
+                      DH_HEADER_SIZE)) {
+    process.status = ER_IOE;
+    goto exit_op_settrig;
   }
 
 exit_op_settrig:
- k_dismiss();
- k_dismiss();
- k_dismiss();
+  k_dismiss();
+  k_dismiss();
+  k_dismiss();
 }
 
 /* END-CODE */

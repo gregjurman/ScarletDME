@@ -40,107 +40,102 @@
 
 /* ====================================================================== */
 
-bool dh_exists(
-   DH_FILE * dh_file, /* File descriptor */
-   char id[],         /* Record id... */
-   short int id_len)  /* ...and length */
-{
- long int group;
- short int group_bytes;
- int lock_slot;
- DH_BLOCK * buff;
- DH_RECORD * rec_ptr;
- FILE_ENTRY * fptr;
- short int subfile;
- bool group_locked = FALSE;
- short int rec_offset;
- short int used_bytes;
- long int grp;
+bool dh_exists(DH_FILE *dh_file, /* File descriptor */
+               char id[],        /* Record id... */
+               short int id_len) /* ...and length */
+    {
+  long int group;
+  short int group_bytes;
+  int lock_slot;
+  DH_BLOCK *buff;
+  DH_RECORD *rec_ptr;
+  FILE_ENTRY *fptr;
+  short int subfile;
+  bool group_locked = FALSE;
+  short int rec_offset;
+  short int used_bytes;
+  long int grp;
 
+  dh_err = DHE_RECORD_NOT_FOUND;
+  process.os_error = 0;
 
- dh_err = DHE_RECORD_NOT_FOUND;
- process.os_error = 0;
+  buff = (DH_BLOCK *)(&dh_buffer);
 
- buff = (DH_BLOCK *)(&dh_buffer);
+  fptr = FPtr(dh_file->file_id);
+  while (fptr->file_lock < 0)
+    Sleep(1000); /* Clearfile in progress */
 
- fptr = FPtr(dh_file->file_id);
- while(fptr->file_lock < 0) Sleep(1000); /* Clearfile in progress */
+  /* Lock group */
 
- /* Lock group */
+  StartExclusive(FILE_TABLE_LOCK, 6);
 
- StartExclusive(FILE_TABLE_LOCK, 6);
- 
- group = dh_hash_group(fptr, id, id_len);
- lock_slot = GetGroupReadLock(dh_file, group);
- group_locked = TRUE;
+  group = dh_hash_group(fptr, id, id_len);
+  lock_slot = GetGroupReadLock(dh_file, group);
+  group_locked = TRUE;
 
- fptr->stats.reads++;
- sysseg->global_stats.reads++;
+  fptr->stats.reads++;
+  sysseg->global_stats.reads++;
 
- EndExclusive(FILE_TABLE_LOCK);
+  EndExclusive(FILE_TABLE_LOCK);
 
- group_bytes = (short int)(dh_file->group_size);
+  group_bytes = (short int)(dh_file->group_size);
 
- subfile = PRIMARY_SUBFILE;
- grp = group;
+  subfile = PRIMARY_SUBFILE;
+  grp = group;
 
- do {
-     /* Read group */
+  do {
+    /* Read group */
 
-     if (!dh_read_group(dh_file, subfile, grp, (char *)buff, group_bytes))
-      {
-       goto exit_dh_exist;
-      }
+    if (!dh_read_group(dh_file, subfile, grp, (char *)buff, group_bytes)) {
+      goto exit_dh_exist;
+    }
 
-     /* Scan group buffer for record */
+    /* Scan group buffer for record */
 
-     used_bytes = buff->used_bytes;
-     if ((used_bytes == 0) || (used_bytes > group_bytes))
-      {
-       log_printf("DH_EXIST: Invalid byte count (x%04X) in subfile %d, group %ld\nof file %s\n",
-                  used_bytes, (int)subfile, grp, fptr->pathname);
-       dh_err = DHE_POINTER_ERROR;
-       goto exit_dh_exist;
-      }
+    used_bytes = buff->used_bytes;
+    if ((used_bytes == 0) || (used_bytes > group_bytes)) {
+      log_printf("DH_EXIST: Invalid byte count (x%04X) in subfile %d, group "
+                 "%ld\nof file %s\n",
+                 used_bytes, (int) subfile, grp, fptr->pathname);
+      dh_err = DHE_POINTER_ERROR;
+      goto exit_dh_exist;
+    }
 
-     rec_offset = offsetof(DH_BLOCK, record);
-     while(rec_offset < used_bytes)
-      {
-       rec_ptr = (DH_RECORD *)(((char *)buff) + rec_offset);
+    rec_offset = offsetof(DH_BLOCK, record);
+    while (rec_offset < used_bytes) {
+      rec_ptr = (DH_RECORD *)(((char *)buff) + rec_offset);
 
-       if (id_len == rec_ptr->id_len)
-        {
-         if (fptr->flags & DHF_NOCASE)
-          {
-           if (!MemCompareNoCase(id, rec_ptr->id, id_len)) goto found;
-          }
-         else
-          {
-           if (!memcmp(id, rec_ptr->id, id_len)) goto found;
-          }
+      if (id_len == rec_ptr->id_len) {
+        if (fptr->flags & DHF_NOCASE) {
+          if (!MemCompareNoCase(id, rec_ptr->id, id_len))
+            goto found;
+        } else {
+          if (!memcmp(id, rec_ptr->id, id_len))
+            goto found;
         }
-
-       rec_offset += rec_ptr->next;
       }
 
-     /* Move to next group buffer */
+      rec_offset += rec_ptr->next;
+    }
 
-     subfile = OVERFLOW_SUBFILE;
-     grp = GetFwdLink(dh_file, buff->next);
-    } while(grp != 0);
+    /* Move to next group buffer */
 
- goto exit_dh_exist;  /* Record not found */
+    subfile = OVERFLOW_SUBFILE;
+    grp = GetFwdLink(dh_file, buff->next);
+  } while (grp != 0);
 
+  goto exit_dh_exist; /* Record not found */
 
 /* Record found */
 
 found:
- dh_err = 0;
+  dh_err = 0;
 
 exit_dh_exist:
- if (group_locked) FreeGroupReadLock(lock_slot);
+  if (group_locked)
+    FreeGroupReadLock(lock_slot);
 
- return (dh_err == 0);
+  return (dh_err == 0);
 }
 
 /* END-CODE */
