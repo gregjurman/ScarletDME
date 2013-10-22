@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 01 Jul 07  2.5-7 Extensive change for PDA merge.
  * 08 Dec 04  2.1-0 Added HDR_CTYPE.
@@ -38,22 +38,22 @@
  *
  * START-CODE
  */
-
+#include <stdint.h>
 
 typedef struct OBJECT_HEADER OBJECT_HEADER;
 
 struct OBJECT_HEADER {
         u_char magic;
         u_char rev;
-        long int id;               /* Object id of loaded object */
-        long int start_offset;     /* Execution begins here */
-        short int args;            /* No of arguments */
-        short int no_vars;         /* No of variables */
-        short int stack_depth;     /* Maximum stack requirements */
-        long int sym_tab_offset;   /* Symbol table offset or zero */
-        long int line_tab_offset;  /* Line table offset or zero */
-        long int object_size;      /* Total bytes including symbol & x-ref */
-        unsigned short int flags;  /* Flag bits */
+        int32_t id;               /* Object id of loaded object */
+        int32_t start_offset;     /* Execution begins here */
+        int16_t args;            /* No of arguments */
+        int16_t no_vars;         /* No of variables */
+        int16_t stack_depth;     /* Maximum stack requirements */
+        int32_t sym_tab_offset;   /* Symbol table offset or zero */
+        int32_t line_tab_offset;  /* Line table offset or zero */
+        int32_t object_size;      /* Total bytes including symbol & x-ref */
+        uint16_t flags;  /* Flag bits */
 #define HDR_IS_CPROC         0x0001  /* CPROC command processor */
 #define HDR_INTERNAL         0x0002  /* Compiled in internal mode */
 #define HDR_DEBUG            0x0004  /* Compiled in debug mode */
@@ -71,12 +71,12 @@ struct OBJECT_HEADER {
 #define HDR_CTYPE            0x4000  /* Is a C-type */
 #define HDR_IS_CLASS         0x8000  /* Is CLASS module */
 
-        long int compile_time;     /* Date * 86400 + time */
+        int32_t compile_time;     /* Date * 86400 + time */
 /* Extended header : Items differ depending on object type */
         union {
                struct {
-                       short int refs;   /* Reference count of loaded object */
-                       char program_name[MAX_PROGRAM_NAME_LEN+1];
+                       int16_t refs;   /* Reference count of loaded object */
+                       int8_t program_name[MAX_PROGRAM_NAME_LEN+1];
                       } prog;
                struct {
                        u_char totals;    /* Number of TOTAL() functions */
