@@ -94,37 +94,39 @@
 /* Load calculation */
 
 #define DHLoad(loadbytes,grpsize,mod) \
-(long int)((((double)(loadbytes)) * 100.0) / (((double)(grpsize)) * ((double)(mod))))
+(int32_t)((((double)(loadbytes)) * 100.0) / (((double)(grpsize)) * ((double)(mod))))
 
 #define HeaderLoadBytes(h) (((int64)((h)->params.load_bytes)) | (((int64)((h)->params.extended_load_bytes)) << 32))
 
 /* ======================================================================
    Header for primary and overflow subfiles                               */
 
+#include <stdint.h>
+
 typedef struct DH_HEADER DH_HEADER;
 struct DH_HEADER
  {
-  short int magic;
+  int16_t magic;
     #define DH_PRIMARY     0x209A
     #define DH_OVERFLOW    0x209B
     #define DH_INDEX       0x209C
     #define DH_CONVERTING  0x209D   /* Primary subfile during qmconv */
-  long int group_size;              /* As bytes */
+  int32_t group_size;              /* As bytes */
   struct
    {
-    long int modulus;              /* Current modulus */
-    long int min_modulus;
-    long int big_rec_size;
-    short int split_load;          /* Percent */
-    short int merge_load;          /* Percent */
-    unsigned long int load_bytes;  /* Bytes (LS32 bits, see below) */
-    long int mod_value;            /* Imaginary file size for hashing */
-    short int longest_id;          /* Longest record id in file */
-    short int extended_load_bytes; /* MS16 bits of 48 bit load bytes value */
-    long int free_chain;           /* Head of free overflow space */
+    int32_t modulus;              /* Current modulus */
+    int32_t min_modulus;
+    int32_t big_rec_size;
+    int16_t split_load;          /* Percent */
+    int16_t merge_load;          /* Percent */
+    uint32_t load_bytes;  /* Bytes (LS32 bits, see below) */
+    int32_t mod_value;            /* Imaginary file size for hashing */
+    int16_t longest_id;          /* Longest record id in file */
+    int16_t extended_load_bytes; /* MS16 bits of 48 bit load bytes value */
+    int32_t free_chain;           /* Head of free overflow space */
    } params;
-  unsigned short int flags;         /* See DH_FILE structure */
-  unsigned long int ak_map;         /* LSB = first AK (AK 0) */
+  uint16_t flags;         /* See DH_FILE structure */
+  uint32_t ak_map;         /* LSB = first AK (AK 0) */
   u_char file_version;              /* DH_VERSION */
   u_char trigger_modes;             /* When does trigger fire? */
     #define TRG_PRE_WRITE    0x01
@@ -139,23 +141,23 @@ struct DH_HEADER
   
   char trigger_name[MAX_TRIGGER_NAME_LEN+1];
   struct FILESTATS stats ALIGN2;    /* File statistics counters 0235 */
-  long int jnl_fno;                 /* Journalling file number, zero if off */
+  int32_t jnl_fno;                 /* Journalling file number, zero if off */
   char akpath[MAX_PATHNAME_LEN+1];  /* Null terminated AK directory path */
-  long int creation_timestamp;      /* qmtime() at creation */
-  int64 record_count;               /* Count of records (approximate). This
+  int32_t creation_timestamp;      /* qmtime() at creation */
+  uint64_t record_count;               /* Count of records (approximate). This
                                        value is one greater than the actual
                                        count so that we can recognise zero
                                        as meaning that the value has not been
                                        "corrected" from old QM releases. */
   u_char pad1;
   u_char hash;                      /* Hash type */
-  long int user_hash;               /* Hash code */
-  long int reserved1;
+  int32_t user_hash;               /* Hash code */
+  int32_t reserved1;
 
   /* All subsequent unused bytes in the header can be relied on as being
      zero. This can simplify later additions.                            */
  } ALIGN2;
-#define DH_HEADER_SIZE ((signed int)(sizeof(DH_HEADER)))
+#define DH_HEADER_SIZE ((int32_t)(sizeof(DH_HEADER)))
 
 /* ======================================================================
    Header for AK subfile                                                  */
@@ -164,8 +166,8 @@ typedef struct DH_AK_HEADER DH_AK_HEADER;
 #define AK_CODE_BYTES 512
 struct DH_AK_HEADER
  {
-  short int magic;                  /* DH_INDEX as above */
-  unsigned short int flags;         /* Flag bits (Also in BP AK_INFO.H) */
+  int16_t magic;                  /* DH_INDEX as above */
+  uint16_t flags;         /* Flag bits (Also in BP AK_INFO.H) */
 #define AK_ENABLED    0x0001        /* Index update and usage is enabled */
 #define AK_RIGHT      0x0002        /* Right justified */
 #define AK_NULLS      0x0004        /* Includes null values */
@@ -173,21 +175,21 @@ struct DH_AK_HEADER
 #define AK_LSORT      0x0010        /* Keys are sorted left aligned or... */
 #define AK_RSORT      0x0020        /* ... sorted left aligned (or unsorted) */
 #define AK_NOCASE     0x0040        /* Case insensitive AK */
-  short int fno;                    /* Field number, -1 if I-type index */
-  short int spare;
-  long int free_chain;              /* Pointer to head of free chain */
+  int16_t fno;                    /* Field number, -1 if I-type index */
+  int16_t spare;
+  int32_t free_chain;              /* Pointer to head of free chain */
      /* Although the following items refer to I-types, the entire
         dictionary record is stored here for all indices, not just I-types */
-  long int itype_len;               /* Length of i-type expression */
-  long int itype_ptr;               /* Pointer if I-type elsewhere, else 0 */
+  int32_t itype_len;               /* Length of i-type expression */
+  int32_t itype_ptr;               /* Pointer if I-type elsewhere, else 0 */
   u_char itype[AK_CODE_BYTES];      /* Buffer for short i-type */
   char ak_name[MAX_AK_NAME_LEN + 1];  /* Name of AK field */
-  long int data_creation_timestamp; /* Creation timestamp of data file */
+  int32_t data_creation_timestamp; /* Creation timestamp of data file */
   char collation_map_name[MAX_ID_LEN+1]; /* Name of collation map or null... */
   char collation_map[256];          /* ...and the actual map */
 
  } ALIGN2;
-#define DH_AK_HEADER_SIZE ((signed int)(sizeof(DH_AK_HEADER)))
+#define DH_AK_HEADER_SIZE ((int32_t)(sizeof(DH_AK_HEADER)))
 
 /* ======================================================================
    Record structure                                                       */
@@ -195,13 +197,13 @@ struct DH_AK_HEADER
 typedef struct DH_RECORD DH_RECORD;
 struct DH_RECORD
  {
-  short int next;                   /* Record size (offset to next record) */
+  int16_t next;                   /* Record size (offset to next record) */
   unsigned char flags;              /* Flag word */
     #define DH_BIG_REC  0x01
   unsigned char id_len;             /* Bytes in id */
   union {
-         long int data_len;         /* Data length for normal record */
-         long int big_rec;          /* Group address for big record */
+         int32_t data_len;         /* Data length for normal record */
+         int32_t big_rec;          /* Group address for big record */
         } data;
   char id[1];                       /* Id starts here, followed by data */
  } ALIGN2;
@@ -215,14 +217,14 @@ struct DH_RECORD
 typedef struct DH_BLOCK DH_BLOCK;
 struct DH_BLOCK
  {
-  long int next;            /* Base address of next group in overflow chain */
-  short int used_bytes;     /* Bytes used including this header. Zero in
+  int32_t next;            /* Base address of next group in overflow chain */
+  int16_t used_bytes;     /* Bytes used including this header. Zero in
                                free primary or overflow block */
   u_char block_type;        /* DHT_DATA */
   u_char pad;
   DH_RECORD record;
  } ALIGN2;
-#define BLOCK_HEADER_SIZE ((signed int)offsetof(DH_BLOCK, record))
+#define BLOCK_HEADER_SIZE ((int32_t)offsetof(DH_BLOCK, record))
 
 
 /* ======================================================================
@@ -231,15 +233,15 @@ struct DH_BLOCK
 typedef struct DH_BIG_BLOCK DH_BIG_BLOCK;
 struct DH_BIG_BLOCK
  {
-  long int next;            /* Base address of next group in overflow chain */
-  short int used_bytes;     /* Bytes used including this header. Zero in
+  int32_t next;            /* Base address of next group in overflow chain */
+  int16_t used_bytes;     /* Bytes used including this header. Zero in
                                free block */
   u_char block_type;        /* DHT_BIG_REC */
   u_char pad;
-  long int data_len;        /* Record length (valid in first block only) */
+  int32_t data_len;        /* Record length (valid in first block only) */
   char data[1];
  } ALIGN2;
-#define DH_BIG_BLOCK_SIZE ((signed int)(offsetof(DH_BIG_BLOCK,data)))
+#define DH_BIG_BLOCK_SIZE ((int32_t)(offsetof(DH_BIG_BLOCK,data)))
 
 
 /* ======================================================================
@@ -256,20 +258,20 @@ struct DH_BIG_BLOCK
 typedef struct DH_FREE_NODE DH_FREE_NODE;
 struct DH_FREE_NODE
  {
-  short int used_bytes;         /* Actually not used in free node */
+  int16_t used_bytes;         /* Actually not used in free node */
   u_char node_type;             /* AK_FREE_NODE */
   u_char spare;
-  long int next;                /* Pointer to next node in free list */
+  int32_t next;                /* Pointer to next node in free list */
  } ALIGN2;
-#define DH_FREE_NODE_SIZE ((signed int)(sizeof(DH_FREE_NODE)))
+#define DH_FREE_NODE_SIZE ((int32_t)(sizeof(DH_FREE_NODE)))
 
 typedef struct DH_INT_NODE DH_INT_NODE;
 struct DH_INT_NODE
  {
-  short int used_bytes;         /* Bytes used in node */
+  int16_t used_bytes;         /* Bytes used in node */
   u_char node_type;             /* AK_INT_NODE */
   u_char child_count;           /* Number of child nodes */
-  long int child[MAX_CHILD];    /* Child node pointers... */
+  int32_t child[MAX_CHILD];    /* Child node pointers... */
   u_char key_len[MAX_CHILD];    /* ...and length of keys */
   char keys[1];                 /* Key list (undelimited) */
  } ALIGN2;
@@ -279,38 +281,38 @@ struct DH_INT_NODE
 typedef struct DH_TERM_NODE DH_TERM_NODE;
 struct DH_TERM_NODE
  {
-  short int used_bytes;         /* Bytes used in node */
+  int16_t used_bytes;         /* Bytes used in node */
   u_char node_type;             /* AK_TERM_NODE */
   u_char spare;
-  long int left;                /* Pointer to left terminal node */
-  long int right;               /* Pointer to right terminal node */
+  int32_t left;                /* Pointer to left terminal node */
+  int32_t right;               /* Pointer to right terminal node */
   DH_RECORD record;
  } ALIGN2;
-#define TERM_NODE_HEADER_SIZE ((signed int)offsetof(DH_TERM_NODE, record))
+#define TERM_NODE_HEADER_SIZE ((int32_t)offsetof(DH_TERM_NODE, record))
 
 
 typedef struct DH_ITYPE_NODE DH_ITYPE_NODE;
 struct DH_ITYPE_NODE
  {
-  short int used_bytes;
+  int16_t used_bytes;
   u_char node_type;             /* AK_ITYPE_NODE */
   u_char spare;
-  long int next;
+  int32_t next;
   u_char data[1];
  } ALIGN2;
-#define DH_ITYPE_NODE_DATA_OFFSET ((signed int)offsetof(DH_ITYPE_NODE, data))
+#define DH_ITYPE_NODE_DATA_OFFSET ((int32_t)offsetof(DH_ITYPE_NODE, data))
 
 typedef struct DH_BIG_NODE DH_BIG_NODE;
 struct DH_BIG_NODE
  {
-  short int used_bytes;
+  int16_t used_bytes;
   u_char node_type;             /* AK_BIGREC_NODE */
   u_char spare;
-  long int next;                /* Pointer to next block in chain */
-  long int data_len;            /* Record length (valid in first block only) */
+  int32_t next;                /* Pointer to next block in chain */
+  int32_t data_len;            /* Record length (valid in first block only) */
   char data[1];
  } ALIGN2;
-#define DH_AK_BIG_NODE_SIZE ((signed int)(offsetof(DH_BIG_NODE,data)))
+#define DH_AK_BIG_NODE_SIZE ((int32_t)(offsetof(DH_BIG_NODE,data)))
 
 
 

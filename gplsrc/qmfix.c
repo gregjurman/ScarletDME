@@ -3253,7 +3253,7 @@ void progress_bar(long int grp) {
         (grp - last_grp_reported >= MIN_BAR_INTERVAL)) {
       memset(s, '-', 50);
       memset(s, '*', pct_done);
-      sprintf(s + 50, "| %ld/%ld", grp, header.params.modulus);
+      sprintf(s + 50, "| %ld/%i", grp, header.params.modulus);
       printf("\r%s", s);
       last_pct_reported = pct_done;
       last_grp_reported = grp;
@@ -3261,7 +3261,7 @@ void progress_bar(long int grp) {
     }
   } else /* End of scan */
       {
-    printf("\r**************************************************| %ld/%ld\n",
+    printf("\r**************************************************| %i/%i\n",
            header.params.modulus, header.params.modulus);
     last_pct_reported = -1;
     last_grp_reported = -MIN_BAR_INTERVAL;
