@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 01 Jul 07  2.5-7 Extensive change for PDA merge.
  * 19 Jun 07  2.5-7 k_call() now has additional argument for stack adjustment.
@@ -299,7 +299,7 @@ int net_readv(FILE_VAR * fvar, char * id, short int id_len, int field_no, unsign
 int net_recordlocked(FILE_VAR * fvar, char * id, short int id_len);
 int net_scanindex(FILE_VAR * fvar, char * index_name, short int list_no,
                   DESCRIPTOR * key_descr, bool right);
-int net_select(FILE_VAR * fvar, STRING_CHUNK ** list, long int * count);
+int net_select(FILE_VAR * fvar, STRING_CHUNK ** list, int32_t * count);
 int net_selectindex(FILE_VAR * fvar, char * index_name, STRING_CHUNK ** str);
 int net_selectindexv(FILE_VAR * fvar, char * index_name, char * value, STRING_CHUNK ** str);
 int net_setindex(FILE_VAR * fvar, char * index_name, bool right);
@@ -435,7 +435,7 @@ void strrep(char * s, char oldstr, char newstr);
 void dump_rec_cache(void);
 void init_record_cache(void);
 void cache_record(short int fno, short int id_len, char * id, STRING_CHUNK * head);
-bool scan_record_cache(short int fno, short int id_len, char * id, 
+bool scan_record_cache(short int fno, short int id_len, char * id,
                        STRING_CHUNK ** data);
 
 /* SOCKIO.C */

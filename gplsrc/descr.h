@@ -6,21 +6,21 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 09 Apr 09 gwb Added SKT_RAW
- *               Added "family" to the SOCKVAR struct in order to track whether or 
+ *               Added "family" to the SOCKVAR struct in order to track whether or
  *               not we're using IPv4 or IPv6.
  *
  * 06 Apr 09 gwb Increased the size of the ip_addr variable in SOCKVAR to handle
@@ -68,7 +68,7 @@
  *              Conversely, some operations are slower.
  *              The actual string represented by the string chunks may be
  *              referenced by more than one descriptor. This is controlled
- *              using a reference count in the first chunk.
+ *              using a reference couint in the first chunk.
  *              The rmv_saddr and n1 elements of the descriptor are only
  *              significant if the DF_REMOVE flag is set in which case they
  *              point to the string chunk and offset within that chunk of the
@@ -76,11 +76,11 @@
  *
  * FILE_REF     A file variable.
  *              Points to a FILE_VAR structure.  This includes a reference
- *              count to allow multiple descriptors to share a FILE_VAR.
+ *              couint to allow multiple descriptors to share a FILE_VAR.
  *
  * ARRAY        An array.
  *              Points to an ARRAY_HEADER structure.  Again, this has a
- *              reference count.  The array header contains information about
+ *              reference couint.  The array header contains information about
  *              the array dimensions and points to a list of ARRAY_CHUNK
  *              structures.  This two level approach significantly improves
  *              performance of redimensioning arrays.
@@ -99,7 +99,7 @@
  *              session, this structure contains the actual screen data. On a
  *              QMTerm session, the data is held locally by QMTerm and a
  *              unique reference id is stored in the SCREEN_IMAGE.
- *             
+ *
  * BTREE        A binary tree data item.
  *              Not accessible to user mode programs (because it's a bit
  *              awkward to use), these are used internally by the QMBasic
@@ -111,7 +111,7 @@
  *              variable type was introduced late in the life of QM, the
  *              numbered lists are handled differently.
  *
- * PMATRIX      Pick style systems use a different form of matrix than 
+ * PMATRIX      Pick style systems use a different form of matrix than
  *              Information style systems. Firstly, Pick matrices have no zero
  *              element. Secondly, a Pick matrix in a common block is just a
  *              list of simple data items. Both styles have their advantages
@@ -148,17 +148,19 @@
 
 /* ====================================================================== */
 
+#include <stdint.h>
+
 /* Data descriptor */
 
 struct DESCRIPTOR {
                    u_char type;               /* Item type */
                    u_char flags;
 #ifdef BIG_ENDIAN_SYSTEM
-   #define InitDescr(d, t) *((short int *)(d)) = ((t) << 8)
+   #define InitDescr(d, t) *((int16_t *)(d)) = ((t) << 8)
 #else
-   #define InitDescr(d, t) *((short int *)(d)) = t
+   #define InitDescr(d, t) *((int16_t *)(d)) = t
 #endif
-                   short int n1;
+                   int16_t n1;
                       /* OBJCDX:
                             Key value for OBJCODE reference.
                          STRING:
@@ -174,7 +176,7 @@ struct DESCRIPTOR {
                           DESCRIPTOR * d_addr; /* Ptr to descriptor (ADDR) */
 
                           /* INTEGER */
-                          long int value;      /* Value */
+                          int32_t value;      /* Value */
 
                           /* FLOATNUM */
                           double float_value;  /* Value */
@@ -221,8 +223,8 @@ struct DESCRIPTOR {
                           /* OBJCD */
                           struct {
                                   OBJDATA * objdata;      /* Object associated with this data */
-                                  unsigned short int key; /* Key value */
-                                  u_char arg_ct;          /* Arg count + var args flag */
+                                  uint16_t key; /* Key value */
+                                  u_char arg_ct;          /* Arg couint + var args flag */
                                  } objcode;
 
                           /* OBJCDX */
@@ -233,8 +235,8 @@ struct DESCRIPTOR {
 
                           /* Debugging */
                           struct {
-                                  long int w1;
-                                  long int w2;
+                                  int32_t w1;
+                                  int32_t w2;
                                  } dbg;
                          } data;
                   };
@@ -283,13 +285,13 @@ struct DESCRIPTOR {
 
 struct STRING_CHUNK {
         STRING_CHUNK * next;  /* Ptr to next chunk */
-        short int alloc_size; /* Allocated space excluding header */
-        short int bytes;      /* Actual used bytes */
+        int16_t alloc_size; /* Allocated space excluding header */
+        int16_t bytes;      /* Actual used bytes */
         /* The following are only valid in the first chunk */
-        long int string_len;  /* Total length of all chunks */
-        long int field;       /* Hint field number and... */
-        long int offset;      /* ...offset. In SELLIST this is item count */
-        short int ref_ct;     /* Reference count */
+        int32_t string_len;  /* Total length of all chunks */
+        int32_t field;       /* Hint field number and... */
+        int32_t offset;      /* ...offset. In SELLIST this is item couint */
+        int16_t ref_ct;     /* Reference couint */
         char data[1];
        };
 #define STRING_CHUNK_HEADER_SIZE (offsetof(STRING_CHUNK, data))
@@ -307,11 +309,11 @@ struct SQ_FILE {
                 int64 line;          /* Current line no */
                 int64 base;          /* Base address of block */
                 char * record_name;  /* Record id */
-                short int record_name_len;
-                short int bytes;     /* Bytes in buffer */
+                int16_t record_name_len;
+                int16_t bytes;     /* Bytes in buffer */
                 char * pathname;     /* File pathname */
-                long int timeout;    /* Timeout, -ve if none */
-                unsigned short int flags;
+                int32_t timeout;    /* Timeout, -ve if none */
+                uint16_t flags;
 #define SQ_NOBUF  0x0001             /* Unbuffered */
 #define SQ_DIRTY  0x0002             /* Buffer needs writing */
 #define SQ_PORT   0x0004             /* Is a port */
@@ -323,9 +325,9 @@ struct SQ_FILE {
 /* File variable structure
    See !!FVAR_CREATE!! and !!FVAR_DESTROY!! */
 struct FILE_VAR {
-                 short int ref_ct;       /* Reference count */
-                 short int file_id;      /* File table index */
-                 long int index;         /* Sequential reference counter */
+                 int16_t ref_ct;       /* Reference couint */
+                 int16_t file_id;      /* File table index */
+                 int32_t index;         /* Sequential reference couinter */
                  u_char type;
 /* !!FVAR_TYPES!! */
 #define INITIAL_FVAR    0
@@ -338,10 +340,10 @@ struct FILE_VAR {
                  u_char flags;
 #define FV_RDONLY       0x01             /* Read only file */
 #define FV_NON_TXN      0x02             /* Updates are non-transactional */
-                 short int id_len;       /* Length of id and... */
+                 int16_t id_len;       /* Length of id and... */
                  char * id;              /* ...actual id of last record read */
                  char * voc_name;
-               
+
                  union {
                         struct {
                                 DH_FILE * dh_file;   /* DH_FILE structure */
@@ -351,11 +353,11 @@ struct FILE_VAR {
                                 SQ_FILE * sq_file;   /* SQ_FILE structure */
                                } seq;
                         struct {
-                                unsigned short int mark_mapping : 1;
+                                uint16_t mark_mapping : 1;
                                } dir;
                         struct {
                                 int file_no;
-                                short int host_index;
+                                int16_t host_index;
                                } net;
                        } access;
        };
@@ -366,27 +368,27 @@ struct FILE_VAR {
 #define MAX_ARRAY_CHUNK_SIZE 200  /* Max elements in a single chunk */
 
 struct ARRAY_CHUNK {
-        short int num_descr;
-        short int pad;
+        int16_t num_descr;
+        int16_t pad;
         DESCRIPTOR descr[1];
        };
 
 struct ARRAY_HEADER {
-        short int ref_ct;
-        unsigned short int flags;
+        int16_t ref_ct;
+        uint16_t flags;
           /* These tokens are also in BP INT$KEYS.H */
           #define AH_PICK_STYLE  0x0001  /* Pick style matrix */
           #define AH_AUTO_DELETE 0x0002  /* Self-deleting common block */
-        long int rows;
-        long int cols;              /* Zero if one dimension */
-        long int alloc_elements;    /* Allocated descriptors and... */
-        long int used_elements;     /* ...number actually used (could have
+        int32_t rows;
+        int32_t cols;              /* Zero if one dimension */
+        int32_t alloc_elements;    /* Allocated descriptors and... */
+        int32_t used_elements;     /* ...number actually used (could have
                                        redimensioned to smaller size) */
         ARRAY_HEADER * next_common; /* Chain linking named common */
-        short int num_chunks;       /* Entries in chunk array below. There may
+        int16_t num_chunks;       /* Entries in chunk array below. There may
                                        be unused entries at the end of the
                                        array which will be set to NULL.      */
-        short int pad;
+        int16_t pad;
         ARRAY_CHUNK * chunk[1];
        };
 
@@ -397,18 +399,18 @@ struct ARRAY_HEADER {
 /* ------------------ Screen image IMAGE ------------------ */
 
 struct SCREEN_IMAGE {
-                     short int ref_ct;
-                     short int pad;
+                     int16_t ref_ct;
+                     int16_t pad;
                      void * buffer;        /* Screen image data */
-                     short int x;          /* Left edge of block */
-                     short int y;          /* Top edge of block */
-                     short int w;          /* Width of block */
-                     short int h;          /* Height of block */
-                     short int line;       /* Cursor line position */
-                     short int col;        /* Cursor column position */
-                     short int pagination;
-                     short int attr;       /* ms8 = Inverse, ls8 = attr */
-                     long int id;
+                     int16_t x;          /* Left edge of block */
+                     int16_t y;          /* Top edge of block */
+                     int16_t w;          /* Width of block */
+                     int16_t h;          /* Height of block */
+                     int16_t line;       /* Cursor line position */
+                     int16_t col;        /* Cursor column position */
+                     int16_t pagination;
+                     int16_t attr;       /* ms8 = Inverse, ls8 = attr */
+                     int32_t id;
                     };
 
 /* ------------------ Binary Tree BTREE ------------------ */
@@ -423,8 +425,8 @@ struct BTREE_ELEMENT {
                      };
 
 struct BTREE_HEADER {
-                     short int ref_ct;
-                     short int pad;
+                     int16_t ref_ct;
+                     int16_t pad;
                      BTREE_ELEMENT * head;
                      BTREE_ELEMENT * current;
                      u_char keys;
@@ -441,9 +443,9 @@ struct BTREE_HEADER {
 struct PMATRIX_HEADER
  {
   DESCRIPTOR * com_descr;         /* Associated COMMON */
-  unsigned short int base_offset; /* Where is element 1 */
-  unsigned short int rows;
-  unsigned short int cols;        /* Zero if one dimension */
+  uint16_t base_offset; /* Where is element 1 */
+  uint16_t rows;
+  uint16_t cols;        /* Zero if one dimension */
  };
 
 /* ------------------------ SOCK ------------------------- */
@@ -462,7 +464,7 @@ struct SOCKVAR {
     #define SKT_TCP            0x00000000
     #define SKT_UDP            0x00010000
     #define SKT_ICMP           0x00020000
- unsigned short int flags;
+ uint16_t flags;
     #define SKT_BLOCKING       0x0001 /* Blocking mode */
     #define SKT_NON_BLOCKING   0x0002 /* Non-blocking (Irrelevant here) */
     #define SKT_SERVER         0x0004 /* Opened with CREATE.SERVER.SOCKET */
@@ -485,18 +487,18 @@ struct OBJECT_NAME_MAP  /* This is embedded in the object code */
  u_char hi_set;        /* SET routine / method subroutine key, ms 8 bits */
  u_char lo_get;        /* GET routine / method subroutine key, ls 8 bits */
  u_char hi_get;        /* GET routine / method function key, ms 8 bits */
- u_char set_arg_ct;    /* SET routine / method subroutine arg count */
- u_char get_arg_ct;    /* GET routine / method function arg count */
+ u_char set_arg_ct;    /* SET routine / method subroutine arg couint */
+ u_char get_arg_ct;    /* GET routine / method function arg couint */
  char name[1];         /* Item name, upper case, null terminated */
 };
 /* Notes:
    The public variable number is negative if it is read-only.
-   The two arg count items use the top bit to indicate that the
+   The two arg couint items use the top bit to indicate that the
    routine is declared as VAR.ARGS.                                   */
 
-#define SetKey(p) ((p)->lo_set + ((short int)((p)->hi_set) << 8))
-#define GetKey(p) ((p)->lo_get + ((short int)((p)->hi_get) << 8))
-#define PublicVar(p) ((p)->lo_var + ((short int)((p)->hi_var) << 8))
+#define SetKey(p) ((p)->lo_set + ((int16_t)((p)->hi_set) << 8))
+#define GetKey(p) ((p)->lo_get + ((int16_t)((p)->hi_get) << 8))
+#define PublicVar(p) ((p)->lo_var + ((int16_t)((p)->hi_var) << 8))
 #define NextNameMapEntry(p) (((p)->next == 0)?NULL:((OBJECT_NAME_MAP *)(((char *)(p)) + ((p)->next))))
 
 /* ----------------------- OBJUNDEF ---------------------- */
@@ -506,7 +508,7 @@ struct OBJUNDEF   /* An undefined object handler reference */
  int ref_ct;
  OBJDATA * objdata;      /* Object associated with this data */
  char * undefined_name;  /* The handler name we could not find */
- unsigned short int key; /* Key value */
+ uint16_t key; /* Key value */
 };
 
 /* ------------------------- OBJ -------------------------
@@ -526,7 +528,7 @@ struct OBJUNDEF   /* An undefined object handler reference */
 
 struct OBJDATA    /* The object itself */
 {
- int ref_ct;                 /* Reference count */
+ int ref_ct;                 /* Reference couint */
  void * objprog;             /* Object program pointer */
  OBJECT_NAME_MAP * name_map; /* Start of name map */
  ARRAY_HEADER * obj_vars;    /* PUBLIC and GLOBAL data array */

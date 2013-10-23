@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 08 Nov 07  2.6-5 Removed op_exch(), relinking to indentical op_swap().
  * 03 Sep 07  2.6-1 0560 In itype(), handle difference between I-type and C-type
@@ -149,7 +149,7 @@ void op_argct() {
 
 void op_ascii() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -258,7 +258,7 @@ void op_date() {
 
 void op_dtx() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -288,7 +288,7 @@ void op_dtx() {
 
   descr = e_stack - 1;
   GetInt(descr);
-  n = sprintf(value, "%lX", descr->data.value);
+  n = sprintf(value, "%X", descr->data.value);
 
   p = s;
   if (n < min_width) {
@@ -305,7 +305,7 @@ void op_dtx() {
 
 void op_ebcdic() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -405,7 +405,7 @@ void op_pwcrypt() {
 
 void op_env() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -442,7 +442,7 @@ void op_forloops() { forloop(TRUE); }
 
 Private void forloop(bool store_before_test) {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -455,7 +455,7 @@ Private void forloop(bool store_before_test) {
       |  Initial value. Only        |                             |
       |  present if for_init set    |                             |
       |=============================|=============================|
- 
+
       Opcode is followed by exit jump address
   */
 
@@ -611,7 +611,7 @@ void op_for1s() { for1(TRUE); }
 
 Private void for1(bool store_before_test) {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -622,7 +622,7 @@ Private void for1(bool store_before_test) {
       |  Initial value. Only        |                             |
       |  present if for_init set    |                             |
       |=============================|=============================|
- 
+
       Opcode is followed by exit jump address
   */
 
@@ -749,7 +749,7 @@ Private void for1(bool store_before_test) {
 
 void op_getmsg() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -786,7 +786,7 @@ void op_itype() {
 
 void op_itype2() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -808,7 +808,7 @@ void op_itype2() {
 
 Private void itype() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -911,7 +911,7 @@ inva_i_type:
 
 void op_saveaddr() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -930,7 +930,7 @@ void op_saveaddr() {
 
 void op_sendmail() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1063,7 +1063,7 @@ exit_op_sendmail:
 
 void op_nap() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1110,7 +1110,7 @@ void op_null() {}
 
 void op_ojoin() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1136,7 +1136,7 @@ void op_onerror() { process.op_flags |= P_ON_ERROR; }
 
 void op_oserror() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1153,7 +1153,7 @@ void op_oserror() {
 
 void op_pause() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1216,7 +1216,7 @@ void op_precision() {
 
 void op_procread() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1266,7 +1266,7 @@ void op_procread() {
 
 void op_rtrans() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1306,7 +1306,7 @@ void op_setmode() {
 
 void op_setstat() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1327,7 +1327,7 @@ void op_setstat() {
 
 void op_sleep() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1379,7 +1379,7 @@ void op_sleep() {
 
 void op_status() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1474,7 +1474,7 @@ void op_total() {
 
 void op_trans() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1502,7 +1502,7 @@ void op_trans() {
 
 void op_umask() {
   /* Stack:
- 
+
       |================================|=============================|
       |            BEFORE              |           AFTER             |
       |================================|=============================|
@@ -1532,7 +1532,7 @@ void op_umask() {
 
 void op_vartype() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1558,7 +1558,7 @@ void op_vartype() {
 
 void op_wake() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1590,7 +1590,7 @@ void op_wake() {
 
 void op_xtd() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|

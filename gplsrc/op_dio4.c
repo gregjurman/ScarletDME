@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 15 Aug 07  2.6-0 Reworked remove pointers.
  * 01 Jul 07  2.5-7 Extensive change for PDA merge.
@@ -110,7 +110,7 @@ void op_clearall() {
 void op_clrselect() {
 
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -140,13 +140,13 @@ void op_clrselect() {
 void op_dellist() {
 
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
   top |  List name                  |                             |
       |=============================|=============================|
- 
+
   */
 
   k_recurse(pcode_dellist, 1); /* Execute recursive code */
@@ -158,7 +158,7 @@ void op_dellist() {
 void op_getlist() {
 
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -166,7 +166,7 @@ void op_getlist() {
       |-----------------------------|-----------------------------|
       |  List name                  |                             |
       |=============================|=============================|
- 
+
   */
 
   DESCRIPTOR *descr;
@@ -190,7 +190,7 @@ void op_getlist() {
 void op_formlist() {
 
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -198,7 +198,7 @@ void op_formlist() {
       |-----------------------------|-----------------------------|
       |  Source list                |                             |
       |=============================|=============================|
- 
+
   */
 
   DESCRIPTOR *descr;
@@ -223,7 +223,7 @@ void op_formlist() {
 void op_readlist() {
 
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -231,7 +231,7 @@ void op_readlist() {
       |-----------------------------|-----------------------------|
       |  ADDR to target             |                             |
       |=============================|=============================|
- 
+
   */
 
   DESCRIPTOR *descr;
@@ -269,7 +269,7 @@ void op_readlist() {
 
 void op_rdnxpos() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -278,7 +278,7 @@ void op_rdnxpos() {
       |-----------------------------|-----------------------------|
       |  ADDR to id target          |                             |
       |=============================|=============================|
-  
+
      ON ERROR codes are only returned if ONERROR opcode executed prior to
      call to READNEXT.
   */
@@ -288,7 +288,7 @@ void op_rdnxpos() {
 
 void op_readnext() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -297,7 +297,7 @@ void op_readnext() {
       |-----------------------------|-----------------------------|
       |  ADDR to id target          |                             |
       |=============================|=============================|
-  
+
      ON ERROR codes are only returned if ONERROR opcode executed prior to
      call to READNEXT.
   */
@@ -307,7 +307,7 @@ void op_readnext() {
 
 void op_rdnxexp() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -320,7 +320,7 @@ void op_rdnxexp() {
       |-----------------------------|-----------------------------|
       |  ADDR to id target          |                             |
       |=============================|=============================|
-  
+
      ON ERROR codes are only returned if ONERROR opcode executed prior to
      call to READNEXT.
   */
@@ -330,7 +330,7 @@ void op_rdnxexp() {
 
 void op_rdnxint() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -345,7 +345,7 @@ void op_rdnxint() {
       |-----------------------------|-----------------------------|
       |  ADDR to id target          |                             |
       |=============================|=============================|
-  
+
      ON ERROR codes are only returned if ONERROR opcode executed prior to
      call to READNEXT.
   */
@@ -386,7 +386,7 @@ Private void readnext(
      need to do this so that these descriptors are not in the way when
      we store the id string by calling op_stor().
      The code below removes the two positional descriptors, leaving us with
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -627,7 +627,7 @@ exit_readnext:
 void op_savelist() {
 
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -635,7 +635,7 @@ void op_savelist() {
       |-----------------------------|-----------------------------|
       |  List name                  |                             |
       |=============================|=============================|
- 
+
   */
 
   DESCRIPTOR *descr;
@@ -657,7 +657,7 @@ void op_savelist() {
 
 void op_select() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -666,7 +666,7 @@ void op_select() {
       |-----------------------------|-----------------------------|
       |  File variable              |                             |
       |=============================|=============================|
-  
+
      ON ERROR codes are only returned if ONERROR opcode executed prior to
      call to SELECT.
   */
@@ -772,13 +772,13 @@ void op_select() {
 
 void op_selecte() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
   top |  Select list variable       |                             |
       |=============================|=============================|
-  
+
   */
 
   DESCRIPTOR *src_descr;
@@ -851,7 +851,7 @@ void op_selecte() {
 
 void op_selectv() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -860,10 +860,10 @@ void op_selectv() {
       |-----------------------------|-----------------------------|
       |  File variable              |                             |
       |=============================|=============================|
-  
+
      ON ERROR codes are only returned if ONERROR opcode executed prior to
      call to SELECTV.
- 
+
      NOTE: This opcode uses list 11 internally.
   */
 
@@ -995,7 +995,7 @@ void op_selectv() {
 
 void op_sselect() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1004,7 +1004,7 @@ void op_sselect() {
       |-----------------------------|-----------------------------|
       |  File variable              |                             |
       |=============================|=============================|
-  
+
      ON ERROR codes are only returned if ONERROR opcode executed prior to
      call to SELECT.
   */
@@ -1036,7 +1036,7 @@ void op_sselect() {
 
 void op_slctinfo() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
@@ -1044,7 +1044,7 @@ void op_slctinfo() {
       |-----------------------------|-----------------------------|
       |  Select list number         |                             |
       |=============================|=============================|
- 
+
       Key values:       Function                      Returns
       1    SL_ACTIVE    Test if list is active        True/False
       3    SL_COUNT     Find size of list             No of items
@@ -1241,13 +1241,13 @@ Private bool dir_select(FILE_VAR *fvar, short int list_no) {
 
 void op_dir() {
   /* Stack:
- 
+
       |=============================|=============================|
       |            BEFORE           |           AFTER             |
       |=============================|=============================|
   top |  Directory pathname         | Returned data               |
       |=============================|=============================|
-  
+
   */
 
   DESCRIPTOR *descr;

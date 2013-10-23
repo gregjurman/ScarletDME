@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 15 Oct 07  2.6-5 Added local lock table rebuild event.
  * 01 Jul 07  2.5-7 Extensive change for PDA merge.
@@ -1414,7 +1414,7 @@ void fatal_signal_handler(int signum) {
 
     for (i = 4; i >= -4; i--) {
       descr = e_stack + i;
-      printf("%2d %08lX: %02X %02X %08lX %08lX\n", i, (long) descr, descr->type,
+      printf("%2d %08lX: %02X %02X %08iX %08iX\n", i, (long) descr, descr->type,
              descr->flags, descr->data.dbg.w1, descr->data.dbg.w2);
       if (descr == e_stack_base)
         break;

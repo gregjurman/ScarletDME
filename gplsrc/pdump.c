@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 15 Aug 07  2.6-0 Reworked remove pointers.
  * 01 Jul 07  2.5-7 Extensive change for PDA merge.
@@ -433,7 +433,7 @@ Private void dump_variable(DESCRIPTOR *descr, /* Descriptor to dump */
       break;
 
     case INTEGER:
-      fprintf(fu, "%s: Int: %ld\n", s, descr->data.value);
+      fprintf(fu, "%s: Int: %d\n", s, descr->data.value);
       break;
 
     case FLOATNUM:
@@ -477,9 +477,9 @@ Private void dump_variable(DESCRIPTOR *descr, /* Descriptor to dump */
       ahdr = descr->data.ahdr_addr;
       two_d = (ahdr->cols != 0);
       if (two_d)
-        fprintf(fu, "%s: Array (%ld,%ld)\n", s, ahdr->rows, ahdr->cols);
+        fprintf(fu, "%s: Array (%d,%d)\n", s, ahdr->rows, ahdr->cols);
       else
-        fprintf(fu, "%s: Array (%ld)\n", s, ahdr->rows);
+        fprintf(fu, "%s: Array (%d)\n", s, ahdr->rows);
 
       /* Dump array elements */
 
