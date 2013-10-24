@@ -83,7 +83,7 @@
 
 /* Addressing macros */
 
-#define GroupOffset(dhf,g) ((((int64)(g - 1)) * dhf->group_size) + dhf->header_bytes)
+#define GroupOffset(dhf,g) ((((int64_t)(g - 1)) * dhf->group_size) + dhf->header_bytes)
 
 #define SetFwdLink(dhf, grp) (((grp != 0) && (dhf->file_version < 2))?(((grp)-1) * dhf->group_size + dhf->header_bytes):(grp))
 #define GetFwdLink(dhf, lnk) (((lnk != 0) && (dhf->file_version < 2))?((((lnk) - dhf->header_bytes) / dhf->group_size) + 1):(lnk))
@@ -94,9 +94,8 @@
 /* Load calculation */
 
 #define DHLoad(loadbytes,grpsize,mod) \
-(int32_t)((((double)(loadbytes)) * 100.0) / (((double)(grpsize)) * ((double)(mod))))
-
-#define HeaderLoadBytes(h) (((int64)((h)->params.load_bytes)) | (((int64)((h)->params.extended_load_bytes)) << 32))
+(int32_t)((((float)(loadbytes)) * 100.0) / (((float)(grpsize)) * ((float)(mod))))
+#define HeaderLoadBytes(h) (((int64_t)((h)->params.load_bytes)) | (((int64_t)((h)->params.extended_load_bytes)) << 32))
 
 /* ======================================================================
    Header for primary and overflow subfiles                               */
@@ -119,7 +118,7 @@ struct DH_HEADER
     int32_t big_rec_size;
     int16_t split_load;          /* Percent */
     int16_t merge_load;          /* Percent */
-    uint32_t load_bytes;  /* Bytes (LS32 bits, see below) */
+    uint32_t load_bytes;         /* Bytes (LS32 bits, see below) */
     int32_t mod_value;            /* Imaginary file size for hashing */
     int16_t longest_id;          /* Longest record id in file */
     int16_t extended_load_bytes; /* MS16 bits of 48 bit load bytes value */
@@ -198,9 +197,9 @@ typedef struct DH_RECORD DH_RECORD;
 struct DH_RECORD
  {
   int16_t next;                   /* Record size (offset to next record) */
-  unsigned char flags;              /* Flag word */
+  uint8_t flags;              /* Flag word */
     #define DH_BIG_REC  0x01
-  unsigned char id_len;             /* Bytes in id */
+  uint8_t id_len;             /* Bytes in id */
   union {
          int32_t data_len;         /* Data length for normal record */
          int32_t big_rec;          /* Group address for big record */

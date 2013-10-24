@@ -43,6 +43,7 @@
 #define MAX_GROUP_SIZE   8
 
 #include <dh_stat.h>
+#include <stdint.h>
 
 /* ========================= FILE_ENTRY ========================= */
 
@@ -91,20 +92,20 @@ struct FILE_ENTRY
 
 struct SUBFILE_INFO {
                      OSFILE fu;         /* Operating system file handle */
-                     long int tx_ref;   /* For all accesses */
+                     int32_t tx_ref;   /* For all accesses */
                     };
 
 typedef struct DH_FILE DH_FILE;
 struct DH_FILE {
                 struct DH_FILE * next_file;
-                short int file_id;         /* File table index */
+                int16_t file_id;         /* File table index */
 
 /* File configuration details */
                 u_char file_version;      /* File version */
-                long int group_size;      /* Group size (bytes) */
-                long int header_bytes;    /* Offset of group 1 */
-                long int ak_header_bytes; /* Offset of node 1 */
-                unsigned long int flags;
+                int32_t group_size;      /* Group size (bytes) */
+                int32_t header_bytes;    /* Offset of group 1 */
+                int32_t ak_header_bytes; /* Offset of node 1 */
+                uint32_t flags;
 /* Flags also defined in BP INT$KEYS.H */
 /* LS 16 bits come from file header and are duplicated in file entry... */
 #define DHF_NO_RESIZE       0x00000008   /* No splits/merges (Unreliable in
@@ -122,9 +123,9 @@ struct DH_FILE {
 
 #define DHF_FSYNC           0x01000000   /* fsync pending - see txn.c */
 /* File information */
-                short int open_count;
-                short int no_of_subfiles;
-                unsigned long int ak_map;
+                int16_t open_count;
+                int16_t no_of_subfiles;
+                uint32_t ak_map;
                 ARRAY_HEADER * ak_data;
                 char * trigger_name;       /* Trigger function name */
                 u_char * trigger;          /* Trigger function code pointer */
@@ -142,7 +143,7 @@ struct AK_SCAN
   unsigned long int upd;     /* Copy of file's ak_upd value at time when AK
                                 details saved (SELECTINDEX, SETLEFT/RIGHT) */
   long int node_num;
-  short int rec_offset;
+  int16_t rec_offset;
   u_char flags;
      #define AKS_FOUND 0x01   /* Record was found */
      #define AKS_LEFT  0x02   /* To left of cached record */

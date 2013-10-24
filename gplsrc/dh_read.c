@@ -96,7 +96,7 @@ STRING_CHUNK *dh_read(
     return head;
   }
 
-  group_bytes = (short int)(dh_file->group_size);
+  group_bytes = (uint16_t)(dh_file->group_size);
 
   subfile = PRIMARY_SUBFILE;
   grp = group;
@@ -175,7 +175,7 @@ exit_dh_read:
 STRING_CHUNK *dh_read_record(DH_FILE *dh_file, DH_RECORD *rec_ptr) {
   STRING_CHUNK *str = NULL;
   STRING_CHUNK *tail = NULL;
-  short int group_bytes;
+  int16_t group_bytes;
   long int data_len;
   short int n;
   char *buff = NULL;
@@ -183,7 +183,7 @@ STRING_CHUNK *dh_read_record(DH_FILE *dh_file, DH_RECORD *rec_ptr) {
 
   if (rec_ptr->flags & DH_BIG_REC) /* Found a large record */
       {
-    group_bytes = (short int)(dh_file->group_size);
+    group_bytes = (int16_t)(dh_file->group_size);
     buff = (char *)k_alloc(60, group_bytes);
 
     grp = GetFwdLink(dh_file, rec_ptr->data.big_rec);

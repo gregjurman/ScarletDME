@@ -34,6 +34,7 @@
  */
 
 #include <dh_fmt.h>
+#include <stdint.h>
 
 /* Chain of fully open DH files */
 
