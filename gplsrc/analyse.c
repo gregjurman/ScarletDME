@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 01 Jul 07  2.5-7 Extensive changes for PDA merge.
  * 30 Aug 06  2.4-12 Added non_numeric_ids counter.
@@ -145,7 +145,7 @@ Private bool dh_analyse(DH_FILE *dh_file, /* File descriptor */
   fptr->inhibit_count++;
   EndExclusive(FILE_TABLE_LOCK);
 
-  group_bytes = (short int)(dh_file->group_size);
+  group_bytes = (int16_t)(dh_file->group_size);
   for (group = 1; group <= fptr->params.modulus; group++) {
     if (my_uptr->events)
       process_events();
@@ -308,7 +308,7 @@ exit_dh_analyse:
   sprintf(result,
           "%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%Ld,%ld,"
           "%ld,%Ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld",
-          fptr->params.modulus,    /*  1 Modulus */
+          (long int)fptr->params.modulus,    /*  1 Modulus */
           empty_groups,            /*  2 Empty groups */
           overflowed_groups,       /*  3 Single overflow groups */
           badly_overflowed_groups, /*  4 Badly overflowed groups */

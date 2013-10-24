@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 01 Jul 07  2.5-7 Extensive changes for PDA merge.
  * 30 Aug 06  2.4-12 Added DHF_NO_RESIZE flag.
@@ -58,28 +58,28 @@ struct FILE_ENTRY
    short int inhibit_count;   /* Count of reasons to hold off split/merge */
    long int fvar_index;       /* Cross-ref to FILE_VAR for file lock or for
                                  exclusive access.                          */
-   unsigned long int upd_ct;  /* Updated on write/delete/clear */
-   unsigned long int ak_upd;  /* Updated on AK write */
-   unsigned long txn_id;      /* Transaction id for file lock (0 if outside
+   uint32_t upd_ct;  /* Updated on write/delete/clear */
+   uint32_t ak_upd;  /* Updated on AK write */
+   uint32_t txn_id;      /* Transaction id for file lock (0 if outside
                                  transaction). Applies to owner. */
-   unsigned long device;
-   unsigned long inode;
+   uint32_t device;
+   uint32_t inode;
    char pathname[MAX_PATHNAME_LEN+1];   /* Null terminated */
    struct
     {
-     long int modulus;        /* Current modulus */
-     long int min_modulus;
-     long int big_rec_size;
-     short int split_load;    /* Percent */
-     short int merge_load;    /* Percent */
+     int32_t modulus;        /* Current modulus */
+     int32_t min_modulus;
+     int32_t big_rec_size;
+     int16_t split_load;    /* Percent */
+     int16_t merge_load;    /* Percent */
      int64 load_bytes;        /* Bytes */
-     long int mod_value;      /* Imaginary file size for hashing */
-     short int longest_id;    /* Longest record id in file */
-     long int free_chain;     /* Stored as "group" number */
+     int32_t mod_value;      /* Imaginary file size for hashing */
+     int16_t longest_id;    /* Longest record id in file */
+     int32_t free_chain;     /* Stored as "group" number */
     } params;
    struct FILESTATS stats;
    int64 record_count;        /* Approximate record count. -ve = not set. */
-   unsigned short int flags;  /* File specific flags (from DH file header
+   uint16_t flags;  /* File specific flags (from DH file header
                                  or as appropriate for DIR file) */
  };
 
@@ -131,7 +131,7 @@ struct DH_FILE {
                 u_char * trigger;          /* Trigger function code pointer */
                 u_char trigger_modes;      /* From file header */
                 char * akpath;             /* From file header */
-                long int jnl_fno;          /* Journalling file number */
+                int32_t jnl_fno;          /* Journalling file number */
                 struct SUBFILE_INFO sf[1];
                };
 
@@ -140,9 +140,9 @@ struct DH_FILE {
 
 struct AK_SCAN
  {
-  unsigned long int upd;     /* Copy of file's ak_upd value at time when AK
+  uint32_t upd;     /* Copy of file's ak_upd value at time when AK
                                 details saved (SELECTINDEX, SETLEFT/RIGHT) */
-  long int node_num;
+  int32_t node_num;
   int16_t rec_offset;
   u_char flags;
      #define AKS_FOUND 0x01   /* Record was found */

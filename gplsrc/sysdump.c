@@ -6,18 +6,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 01 Jul 07  2.5-7 Extensive change for PDA merge.
  * 23 Nov 05  2.2-17 Exported from various sources.
@@ -175,17 +175,17 @@ void dump_sysseg(bool dump_cfg) {
       1234ABCD
       */
 
-      printf("%s (%ld,%ld)\n", fptr->pathname, fptr->device, fptr->inode);
+      printf("%s (%ld,%ld)\n", fptr->pathname, (long int)fptr->device, (long int)fptr->inode);
 
       if (fptr->params.modulus != 0) /* DH file */
           {
         printf("%3d %3d %3d %5d %3d %8ld %6ld %8ld %8ld %10lu %3d %08lX\n", i,
                (int)(fptr->ref_ct), (int)(fptr->file_lock),
                (int)(fptr->fvar_index), (int)(fptr->lock_count),
-               fptr->params.modulus, fptr->params.min_modulus,
-               fptr->params.mod_value, fptr->txn_id,
+               (long int)fptr->params.modulus, (long int)fptr->params.min_modulus,
+               (long int)fptr->params.mod_value, (long int)fptr->txn_id,
                (long int)(fptr->params.load_bytes), fptr->inhibit_count,
-               fptr->params.free_chain);
+               (long int)fptr->params.free_chain);
       } else /* Directory file */
           {
         printf("%3d %3d %3d %5d %3d ...... ...... ...... ... ... ..... "
