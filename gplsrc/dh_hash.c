@@ -63,16 +63,16 @@ Private unsigned char bits[] = {
 };
 
 #define RotateRight5(n)                                                        \
-  (unsigned long int)(                                                         \
-      (((unsigned long int)(n) >> 5) | ((unsigned long int)(n) << 27)))
+  (uint32_t)(                                                         \
+      (((uint32_t)(n) >> 5) | ((uint32_t)(n) << 27)))
 
 /* ====================================================================== */
 
 long int hash(char id[], short int id_len) {
   char* p;
-  long int hash_value = 0;
+  int32_t hash_value = 0;
   union {
-    long int val;
+    int32_t val;
     unsigned char chr[4];
   } in, out;
 
