@@ -239,7 +239,7 @@ struct DESCRIPTOR {
                                   int32_t w2;
                                  } dbg;
                          } data;
-                  };
+                  } ALIGN2;
 
 /* Descriptor types (Also in BP INT$KEYS.H) */
 #define UNASSIGNED    0
@@ -293,9 +293,9 @@ struct STRING_CHUNK {
         int32_t offset;      /* ...offset. In SELLIST this is item couint */
         int16_t ref_ct;     /* Reference couint */
         char data[1];
-       };
+       } ALIGN2;
 #define STRING_CHUNK_HEADER_SIZE (offsetof(STRING_CHUNK, data))
-#define MAX_STRING_CHUNK_SIZE ((signed int)(16384 - STRING_CHUNK_HEADER_SIZE))
+#define MAX_STRING_CHUNK_SIZE ((int32_t)(16384 - STRING_CHUNK_HEADER_SIZE))
 
 
 /* ------------------ File descriptor FILE_REF ------------------ */
@@ -356,7 +356,7 @@ struct FILE_VAR {
                                 uint16_t mark_mapping : 1;
                                } dir;
                         struct {
-                                int file_no;
+                                int32_t file_no;
                                 int16_t host_index;
                                } net;
                        } access;
@@ -371,7 +371,7 @@ struct ARRAY_CHUNK {
         int16_t num_descr;
         int16_t pad;
         DESCRIPTOR descr[1];
-       };
+       } ALIGN2;
 
 struct ARRAY_HEADER {
         int16_t ref_ct;
@@ -390,7 +390,7 @@ struct ARRAY_HEADER {
                                        array which will be set to NULL.      */
         int16_t pad;
         ARRAY_CHUNK * chunk[1];
-       };
+       } ALIGN2;
 
 /* Macro to find an array element given its header and element offset */
 #define Element(hdr,n) \

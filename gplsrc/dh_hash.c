@@ -93,8 +93,8 @@ long int hash(char id[], short int id_len) {
 /* ====================================================================== */
 
 long int dh_hash_group(FILE_ENTRY* fptr, char id[], short int id_len) {
-  long int hash_value;
-  long int group;
+  int32_t hash_value;
+  int32_t group;
   char u_id[MAX_ID_LEN];
 
   if (fptr->flags & DHF_NOCASE) {
