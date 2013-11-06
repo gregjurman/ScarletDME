@@ -154,7 +154,6 @@ if test $STAGE -le 9
 then
    echo ===== Stage 9 =====
    echo Compiling terminfo library
-   mkdir terminfo
-   $GPLBIN/qmtic -pterminfo terminfo.src
+   $GPLBIN/qmtic -pterminfo terminfo/terminfo.src
    echo
 fi

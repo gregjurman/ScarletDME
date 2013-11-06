@@ -109,7 +109,7 @@ terminfo:
 	@echo Compiling terminfo library
 	@cd $(GPLSRC)
 	@mkdir $(TERMINFO)
-	@$(GPLBIN)qmtic -pterminfo $(MAIN)terminfo.src
+	@$(GPLBIN)qmtic -pterminfo $(MAIN)/terminfo/terminfo.src
 
 qmclilib.o: qmclilib.c revstamp.h
 	@echo Compiling $@ with -fPIC
