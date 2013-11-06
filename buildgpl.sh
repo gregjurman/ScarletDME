@@ -25,7 +25,7 @@ GPLSRC=src
 GPLOBJ=obj
 PRECOMPILEDENV=precompiled
 GPLBIN=bin
-QM_GCC_OPTIONS="-Wall -Werror -DLINUX -D_FILE_OFFSET_BITS=64 -DGPL -g -fPIC"
+QM_GCC_OPTIONS="-Wall -DLINUX -D_FILE_OFFSET_BITS=64 -DGPL -g -fPIC"
 QMLIBS="-lm -lcrypt -ldl"
 
 STAGE=$1
@@ -79,9 +79,9 @@ then
         echo "Linking qm"
 
         objects=''
-        for file in `cat gpl.src`
+        for file in `cat build-order`
         do
-            objects="$objects $GPLOBJ/$file.o"
+            objects="$objects $GPLOBJ/${file}.o"
         done
         gcc -o $GPLBIN/qm $QMLIBS $objects
 
