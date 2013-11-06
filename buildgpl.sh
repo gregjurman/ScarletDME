@@ -75,6 +75,12 @@ then
 
     if test $STAGE -le 2
     then
+
+        # make our bin folder if we need it
+        if [ ! -d $GPLBIN ]; then
+            mkdir $GPLBIN
+        fi
+
         echo ===== Stage 2 =====
         echo "Linking qm"
 
