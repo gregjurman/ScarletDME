@@ -27,6 +27,7 @@ file (GLOB KernelOpSources op_*.c)
 add_library(qmkernelop ${KernelOpSources})
 target_link_libraries(qmkernelop qmdh)
 
+
 # QM daemon
 add_executable(qm qm.c)
 target_link_libraries(qm
@@ -47,3 +48,13 @@ target_link_libraries(qmtic inipath)
 # QMFix
 add_executable(qmfix qmfix.c linuxlb.c ctype.c dh_hash.c)
 target_link_libraries(qmfix inipath)
+
+
+# QMConv
+add_executable(qmconv qmconv.c linuxlb.c ctype.c dh_hash.c)
+
+# qmidx
+add_executable(qmidx qmidx.c)
+
+# qmlnxd
+add_executable(qmlnxd qmlnxd.c qmsem.c)
