@@ -12,7 +12,7 @@
 *    http://www.gnu.org/licenses/lgpl.html
 *
 * Ladybridge Systems can be contacted via the www.openqm.com web site.
-* 
+*
 * START-HISTORY:
 * 06 Apr 09        Add LGPL licence
 * 19 Oct 07  2.6-5 Method used to recognise IP address in qmconnect() was
@@ -66,8 +66,8 @@
 * QMGetSession()
 * QMSetSession()
 * QMLogto()
-* 
-* 
+*
+*
 * File Handling
 * =============
 * QMOpen()
@@ -3608,6 +3608,5 @@ long int swap4(long int data) {
 /* When building a simply .o file instead of a DLL, we need to import
    the routines from ctype.c into this module.                        */
 
-#include <ctype.c>
 
 /* END-CODE */
