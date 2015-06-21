@@ -1,23 +1,23 @@
 /* QM.C
  * Main module of QM
  * Copyright (c) 2007 Ladybridge Systems, All Rights Reserved
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- * 
+ *
  * Ladybridge Systems can be contacted via the www.openqm.com web site.
- * 
+ *
  * START-HISTORY:
  * 20 Jun 12 gwb Rebranded to Scarlet
  *
@@ -266,10 +266,6 @@ char *argv[];
           fprintf(stderr, "User number, login name or ALL required\n");
           exit(1);
 
-        case 'L': /* Apply new licence */
-          command_options |= CMD_APPLY_LICENCE;
-          break;
-
         case 'M': /* Dump memory */
           dump_sysseg(FALSE);
           exit(0);
@@ -412,9 +408,11 @@ help:
           "      -a          Prompt for account unless forced elsewhere\n");
   fprintf(stderr, "      -axxx       Enter ScarletDME in account xxx unless "
                   "forced elsewhere\n");
+  fprintf(stderr, "      -d          Show diagnostic report\n");
   fprintf(stderr, "      -k n        Kill (logout) user n\n");
   fprintf(stderr, "      -k all      Kill (logout) all users n\n");
-  fprintf(stderr, "      -l          Apply new licence\n");
+  fprintf(stderr, "      -m          Show memory report\n");
+  fprintf(stderr, "      -p          Run command as phantom\n");
   fprintf(stderr, "      -u          List current users\n");
   fprintf(stderr, "      -quiet      Suppress all displays on entry\n");
   fprintf(stderr, "      --help      Show this summary\n");

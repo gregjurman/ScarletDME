@@ -1,4 +1,4 @@
 [qm]
-QMSYS=/opt/qmsys
+QMSYS=/home/gjurman/Projects/ScarletDME/basesys
 NUMUSERS=10
 SORTMEM=4096
