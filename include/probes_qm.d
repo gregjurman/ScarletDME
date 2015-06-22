@@ -1,3 +1,4 @@
 provider qm {
-    probe kernel_cycle();
+    probe kernel_dispatch(int);
+
 };

@@ -540,8 +540,9 @@ void k_run_program() /* Returns FALSE if aborts */
 
   do {
     while (!k_exit_cause) {
-      TRACE(QM_KERNEL_CYCLE());
-      dispatch[*(op_pc = pc++)]();
+      op_pc = pc++;
+      TRACE(QM_KERNEL_DISPATCH(*(op_pc)));
+      dispatch[*(op_pc)]();
     }
 
     switch (k_exit_cause) {

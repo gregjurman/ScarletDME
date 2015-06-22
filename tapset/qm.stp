@@ -1,5 +1,6 @@
-probe qm_kernel_click = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("kernel_cycle")
+probe qm.kernel.dispatch = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("kernel_dispatch")
 {
-    name = "kernel_cycle"
+    name = "kernel_dispatch"
     count = __ulong($count)
+    opcode = $arg1
 }
