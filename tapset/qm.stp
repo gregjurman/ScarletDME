@@ -1,0 +1,5 @@
+probe qm_kernel_click = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("kernel_cycle")
+{
+    name = "kernel_cycle"
+    count = __ulong($count)
+}
