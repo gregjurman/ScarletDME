@@ -123,6 +123,7 @@
 #include "options.h"
 #include "dh_int.h"
 #include "locks.h"
+#include "trace.h"
 
 #include <setjmp.h>
 #include <time.h>
@@ -539,6 +540,7 @@ void k_run_program() /* Returns FALSE if aborts */
 
   do {
     while (!k_exit_cause) {
+      TRACE(QM_KERNEL_CYCLE());
       dispatch[*(op_pc = pc++)]();
     }
 

@@ -1,4 +1,9 @@
 # CFLAGS
+INCLUDE_DIRECTORIES(
+${CMAKE_SOURCE_DIR}/include
+${CMAKE_BINARY_DIR}/include
+)
+
 SET(CMAKE_C_FLAGS "-DLINUX -D_FILE_OFFSET_BITS=64 -DGPL -g -fPIC")
 
 # Base library and configs
@@ -10,6 +15,7 @@ foreach(BaseSourcesIter analyse b64 clopts config ctype ingroup
     set(BaseSources ${BaseSources} ${BaseSourcesIter}.c)
 endforeach(BaseSourcesIter)
 add_library(qmbase ${BaseSources})
+DTRACE_INSTRUMENT(qmbase)
 
 # Linux specific
 foreach(LinuxSourcesIter linuxio linuxlb linuxprt lnx lnxport)

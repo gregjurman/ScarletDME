@@ -1,7 +1,32 @@
-cmake_minimum_required (VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+# Avoid warnings in higher versions
+if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.6)
+    CMAKE_POLICY(VERSION 2.8)
+endif()
+
+# We use PROPERTIES LINK_INTERFACE_LIBRARIES. See cmake --help-policy CMP0022
+IF(CMAKE_VERSION VERSION_EQUAL "2.8.12" OR
+        CMAKE_VERSION VERSION_GREATER "2.8.12")
+    CMAKE_POLICY(SET CMP0022 OLD)
+ENDIF()
+
+# We use the LOCATION target property (CMP0026)
+# and get_target_property() for non-existent targets (CMP0045)
+# and INSTALL_NAME_DIR (CMP0042)
+IF(CMAKE_VERSION VERSION_EQUAL "3.0.0" OR
+        CMAKE_VERSION VERSION_GREATER "3.0.0")
+    CMAKE_POLICY(SET CMP0026 OLD)
+    CMAKE_POLICY(SET CMP0045 OLD)
+    CMAKE_POLICY(SET CMP0042 OLD)
+ENDIF()
+
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+
 project (ScarletDME)
 
 include_directories("include")
+INCLUDE(dtrace)
+
 add_subdirectory(src)
 #add_subdirectory(terminfo)
 
