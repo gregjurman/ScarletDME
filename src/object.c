@@ -42,6 +42,7 @@
 #include "qm.h"
 #include "header.h"
 #include "config.h"
+#include "trace.h"
 
 #include <time.h>
 
@@ -289,7 +290,10 @@ found:
   obj->prev = NULL;
   object_head = obj;
 
+
+  TRACE(QM_DH_CLOSE_FILE_START(obj_fu));
   CloseFile(obj_fu);
+  TRACE(QM_DH_CLOSE_FILE_END(obj_fu));
   return (void *)(&(obj->code));
 }
 

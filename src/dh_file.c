@@ -77,6 +77,7 @@
 #include "locks.h"
 #include "options.h"
 #include "config.h"
+#include "trace.h"
 
 #include <sched.h>
 int OpenFile(char *path, int mode, int rights);
@@ -149,7 +150,9 @@ exit_dh_open_subfile:
 
 void dh_close_subfile(DH_FILE *dh_file, short int subfile) {
   if (ValidFileHandle(dh_file->sf[subfile].fu)) {
+    TRACE(QM_DH_CLOSE_FILE_START(dh_file->sf[subfile].fu));
     CloseFile(dh_file->sf[subfile].fu);
+    TRACE(QM_DH_CLOSE_FILE_END(dh_file->sf[subfile].fu));
     dh_file->sf[subfile].fu = INVALID_FILE_HANDLE;
     FDS_open_count--;
   }
@@ -158,7 +161,9 @@ void dh_close_subfile(DH_FILE *dh_file, short int subfile) {
 /* ====================================================================== */
 
 void dh_close_file(OSFILE fu) {
+  TRACE(QM_DH_CLOSE_FILE_START(fu));
   CloseFile(fu);
+  TRACE(QM_DH_CLOSE_FILE_END(fu));
   FDS_open_count--;
 }
 
@@ -826,13 +831,14 @@ Private void restart_tx_ref() {
 int OpenFile(char *path, int mode, int rights) {
   OSFILE fu;
   int flags;
-
+  TRACE(QM_DH_OPEN_FILE_START(path, mode, rights));
   fu = open(path, mode, rights);
   if (fu >= 0) {
     flags = fcntl(fu, F_GETFD);
     flags |= FD_CLOEXEC;
     fcntl(fu, F_SETFD, flags);
   }
+  TRACE(QM_DH_OPEN_FILE_END(path, fu));
   return fu;
 }
 

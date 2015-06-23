@@ -4,3 +4,30 @@ probe qm.kernel.dispatch = process("/home/gjurman/Projects/ScarletDME/build/src/
     count = __ulong($count)
     opcode = $arg1
 }
+
+probe qm.dh.close_file_start = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("dh_close_file_start")
+{
+    name = "dh_close_file_start"
+    fd = __ulong($arg1)
+}
+
+probe qm.dh.close_file_end = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("dh_close_file_end")
+{
+    name = "dh_close_file_end"
+    fd = __ulong($arg1)
+}
+
+probe qm.dh.open_file_start = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("dh_open_file_start")
+{
+    name = "dh_open_file_start"
+    path = user_string($arg1)
+    mode = $arg2
+    rights = $arg3
+}
+
+probe qm.dh.open_file_end = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("dh_open_file_end")
+{
+    name = "dh_open_file_end"
+    path = user_string($arg1)
+    fd = __ulong($arg2)
+}
