@@ -1,0 +1,48 @@
+global k_click, start, fd_open, fd_opened, fd_close, fd_map
+
+	probe begin {
+		start = gettimeofday_us();
+	}
+	
+	probe qm.kernel.dispatch {
+		k_click++;
+    }
+	
+	
+	probe qm.dh.open_file_start {
+		fd_open[path] = gettimeofday_ns();
+		printf("dh_file: open(%s, %d, %d) - called\n", path, mode, rights);
+	}
+	
+	probe qm.dh.open_file_end {
+		printf("dh_file: open(%s) => fd: %d\n", path, fd)
+		printf("    took %d ns", gettimeofday_ns() - fd_open[path]);
+		delete fd_open[path];
+		if (fd > 0) {
+			printf("\n");
+			fd_opened[fd] = gettimeofday_us();
+			fd_map[fd] = path;
+		} else {
+			printf(", but failed to do so.\n");
+		}
+	}
+
+	
+	probe qm.dh.close_file_start {
+			fd_close[fd] = gettimeofday_ns();
+			printf("dh_file: close(%s) - called\n", fd_map[fd]);
+	}
+	
+	probe qm.dh.close_file_end {
+		printf("dh_file: close(%s) => fd: %d\n", fd_map[fd], fd);
+		printf("    took %d ns\n", gettimeofday_ns() - fd_close[fd]);
+		printf("    was open for %d us\n", gettimeofday_us() - fd_opened[fd]);
+		delete fd_map[fd];
+		delete fd_close[fd];
+		delete fd_opened[fd];
+	}
+	
+	probe timer.ms(1000) {
+		printf("%d\t%d\n", ((gettimeofday_us()-start)/1000), k_click);
+		k_click=0;
+	}
