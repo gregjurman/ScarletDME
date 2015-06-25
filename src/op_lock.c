@@ -67,6 +67,7 @@
 #include "keys.h"
 #include "header.h"
 #include "tio.h"
+#include "trace.h"
 
 #include <time.h>
 
@@ -1108,7 +1109,7 @@ short int lock_record(
   }
 
   StartExclusive(REC_LOCK_SEM, 32);
-
+  TRACE(QM_LOCK_RECORD_LOCAL_START(txn_id));
   /* Check file lock */
 
   lock_owner = abs(fptr->file_lock); /* 0194 */
@@ -1287,19 +1288,23 @@ short int lock_record(
 exit_lock_record:
   switch (status) {
     case 0: /* Got the lock */
+      TRACE(QM_LOCK_RECORD_LOCAL_END(txn_id));
       my_uptr->lockwait_index = 0;
       break;
 
     case -1: /* Lock table full */
+      TRACE(QM_LOCK_RECORD_LOCAL_ABORT(txn_id, status));
       my_uptr->lockwait_index = 0;
       break;
 
     case -2: /* Deadlock detected */
+      TRACE(QM_LOCK_RECORD_LOCAL_ABORT(txn_id, status));
       if (sysseg->deadlock && !no_wait)
         break; /* Let deadlock system handle */
                /* *** FALL THROUGH *** */
 
     default: /* Blocked by another user */
+      TRACE(QM_LOCK_RECORD_LOCAL_ABORT(txn_id, status));
       if (!no_wait) {
         /* Note that we are waiting for this lock.  If lockwait_index is
            already non-zero, it must be for a subsequent attempt to get
@@ -1407,6 +1412,7 @@ Private bool unlock_id(short int file_id, char *raw_id, short int id_len) {
   LLT_ENTRY *llt;
   LLT_ENTRY *prev_llt;
 
+  TRACE(QM_UNLOCK_RECORD_LOCAL_START());
   fptr = FPtr(file_id);
   if (fptr->lock_count != 0) {
     if (fptr->flags & DHF_NOCASE) {
@@ -1470,6 +1476,7 @@ Private bool unlock_id(short int file_id, char *raw_id, short int id_len) {
   }
 
 exit_unlock_id:
+  TRACE(QM_UNLOCK_RECORD_LOCAL_END(status));
   return status;
 }
 

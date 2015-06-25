@@ -1,4 +1,8 @@
-global k_click, start, fd_open, fd_opened, fd_close, fd_map
+global k_click, start
+global fd_open, fd_openm, fd_closem, fd_map
+global fd_opened, fd_closed, fd_now
+global lock_attempt, lock_success, lock_failure
+global unlock_attempt, unlock_success, unlock_failure
 
 	probe begin {
 		start = gettimeofday_us();
@@ -7,7 +11,6 @@ global k_click, start, fd_open, fd_opened, fd_close, fd_map
 	probe qm.kernel.dispatch {
 		k_click++;
     }
-	
 	
 	probe qm.dh.open_file_start {
 		fd_open[path] = gettimeofday_ns();
@@ -20,29 +23,68 @@ global k_click, start, fd_open, fd_opened, fd_close, fd_map
 		delete fd_open[path];
 		if (fd > 0) {
 			printf("\n");
-			fd_opened[fd] = gettimeofday_us();
+			fd_openm[fd] = gettimeofday_us();
 			fd_map[fd] = path;
+			fd_opened++;
+			fd_now++;
 		} else {
 			printf(", but failed to do so.\n");
 		}
 	}
 
-	
 	probe qm.dh.close_file_start {
-			fd_close[fd] = gettimeofday_ns();
+			fd_closem[fd] = gettimeofday_ns();
 			printf("dh_file: close(%s) - called\n", fd_map[fd]);
 	}
 	
 	probe qm.dh.close_file_end {
 		printf("dh_file: close(%s) => fd: %d\n", fd_map[fd], fd);
-		printf("    took %d ns\n", gettimeofday_ns() - fd_close[fd]);
-		printf("    was open for %d us\n", gettimeofday_us() - fd_opened[fd]);
+		printf("    took %d ns\n", gettimeofday_ns() - fd_closem[fd]);
+		printf("    was open for %d us\n", gettimeofday_us() - fd_openm[fd]);
+		fd_closed++;
+		fd_now--;
 		delete fd_map[fd];
-		delete fd_close[fd];
-		delete fd_opened[fd];
+		delete fd_closem[fd];
+		delete fd_openm[fd];
+	}
+	
+	probe qm.lock_record.local_start {
+		lock_attempt++;
+	}
+	
+	probe qm.lock_record.local_end {
+		lock_success++;
+	}
+	
+	probe qm.unlock_record.local_start {
+		unlock_attempt++;
+	}
+		
+	probe qm.unlock_record.local_end {
+		if (status == 1)
+			unlock_success++;
+		else
+			unlock_failure++;
+	}
+	
+	probe qm.lock_record.local_abort {
+		lock_failure++;
+		printf("Lock failed for reason %d", reason);
 	}
 	
 	probe timer.ms(1000) {
-		printf("%d\t%d\n", ((gettimeofday_us()-start)/1000), k_click);
+		printf("kernel: %d, %d\n", ((gettimeofday_us()-start)/1000), k_click);
+		printf("local.lock_record: %d, %d, %d\n", lock_attempt, lock_success, lock_failure);
+		printf("local.unlock_record: %d, %d, %d\n", unlock_attempt, unlock_success, unlock_failure);
+		printf("dh.filestats: %d, %d, %d\n", fd_now, fd_opened, fd_closed);
 		k_click=0;
+		lock_attempt=0;
+		lock_success=0;
+		lock_failure=0;
+		unlock_attempt=0;
+		unlock_success=0;
+		unlock_failure=0;
+		fd_opened=0;
+		fd_closed=0;
+		printf("\n");
 	}

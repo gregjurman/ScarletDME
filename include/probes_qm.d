@@ -6,4 +6,11 @@ provider qm {
     probe dh_open_file_end(int, int);           // path, fd
     probe dh_close_file_start(int);             // fd
     probe dh_close_file_end(int);               // fd
+
+    // Record locks (local)
+    probe lock_record_local_start(int);         // txn_id
+    probe lock_record_local_end(int);           // txn_id
+    probe lock_record_local_abort(int, int);    // txn_id, status
+    probe unlock_record_local_start();          //
+    probe unlock_record_local_end(int);         // status
 };

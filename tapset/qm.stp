@@ -31,3 +31,35 @@ probe qm.dh.open_file_end = process("/home/gjurman/Projects/ScarletDME/build/src
     path = user_string($arg1)
     fd = __ulong($arg2)
 }
+
+
+probe qm.lock_record.local_start = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("lock_record_local_start")
+{
+    name = "lock_record_local_start"
+    txn_id = __ulong($arg1)
+}
+
+probe qm.lock_record.local_end = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("lock_record_local_end")
+{
+    name = "lock_record_local_end"
+    txn_id = __ulong($arg1)
+}
+
+probe qm.lock_record.local_abort = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("lock_record_local_abort")
+{
+    name = "lock_record_local_abort"
+    txn_id = __ulong($arg1)
+    reason = $arg2
+}
+
+
+probe qm.unlock_record.local_start = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("unlock_record_local_start")
+{
+    name = "unlock_record_local_start"
+}
+
+probe qm.unlock_record.local_end = process("/home/gjurman/Projects/ScarletDME/build/src/qm").mark("unlock_record_local_end")
+{
+    name = "unlock_record_local_end"
+    status = $arg1
+}
