@@ -12,33 +12,29 @@ CodeHeader = _nt("CodeHeader", (
 
 
 class HeaderFlags(object):
-    _flags = {
-        0x0001:"CPROC",
-        0x0002:"INTERNAL",
-        0x0004:"DEBUGMODE",
-        0x0008:"DEBUGGER",
-        0x0010:"NOCASESTRING",
-        0x0020:"FUNC",
-        0x0040:"VARARGS",
-        0x0080:"RECURSIVE",
-        0x0100:"ITYPE",
-        0x0200:"ALLOWBRK",
-        0x0400:"TRUSTED",
-        0x0800:"NETFILES",
-        0x1000:"CASESENSITIVE",
-        0x2000:"QMCALL",
-        0x4000:"CTYPE",
-        0x8000:"CLASS"
-        }
+    _flags = (
+        (0x0001, 0x0002,0x0004, 0x0008,
+        0x0010, 0x0020, 0x0040, 0x0080,
+        0x0100, 0x0200, 0x0400, 0x0800,
+        0x1000, 0x2000, 0x4000, 0x8000),
+        ("CPROC", "INTERNAL", "DEBUGMODE", "DEBUGGER",
+        "NOCASESTRING", "FUNC", "VARARGS", "RECURSIVE",
+        "ITYPE", "ALLOWBRK", "TRUSTED", "NETFILES",
+        "CASESENSITIVE", "QMCALL", "CTYPE", "CLASS")
+    )
 
     def __init__(self, flags):
         self.flags = flags
 
     def __str__(self):
-        return ", ".join([self._flags[k] for k in self._flags if (self.flags & k==k)])
+        return ", ".join([self._flags[1][i] for i, k in zip(range(16), self._flags[0]) if (self.flags & k==k)])
 
     def __repr__(self):
         return "<HeaderFlags: %s>" % self
+
+    def __getattr__(self, attrname):
+        a = self._flags[0][self._flags[1].index(attrname.upper())]
+        return self.flags & a == a
 
 
 class CodeSegment:
@@ -115,6 +111,10 @@ class CodeObject(object):
 
         return CodeObject(new_path)
 
+    def is_recursive(self):
+        _header = self._get_header()
+        return _header.name[0] == "_" and _header.flags.recursive
+
 
 if __name__ == "__main__":
     comp = CodeObject("test.comp")
@@ -122,4 +122,6 @@ if __name__ == "__main__":
     print
 
     new_file = comp.make_no_xref()
-    print new_file._get_header()
+    print new_file._get_header().flags.internal
+    print new_file._get_header().flags.recursive
+    print new_file.is_recursive()
