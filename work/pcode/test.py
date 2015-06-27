@@ -132,11 +132,11 @@ class CodeObject(object):
     def truncate(self, new_size):
         if new_size > len(self._data):
             raise ValueError("New size must be less than current size")
-        self._data = self._data[0:new_size+1]
+        self._data = self._data[0:new_size]
 
     def make_noxref(self):
         new_obj = self.clone()
-        _header = self._get_header()
+        _header = self._header
         obj_size = _header.object_size
         sym_tab_off = _header.symbol_table_offset
         if sym_tab_off: obj_size = sym_tab_off
@@ -148,8 +148,18 @@ class CodeObject(object):
         return new_obj
 
     def is_recursive(self):
-        _header = self._get_header()
+        _header = self._header
         return os.path.basename(self.path)[0] == "_" and _header.flags.recursive
+
+    def write(self, path):
+        with open(path, "wb") as out_file:
+            out_file.write(self.data)
+
+    @property
+    def data(self):
+        mobj = memoryview(self._data)
+        return self._data
+        return self._header.pack() + mobj[165:].tobytes()
 
 
 class PCodeCatalog(object):
