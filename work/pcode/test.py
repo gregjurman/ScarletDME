@@ -184,4 +184,4 @@ if __name__ == "__main__":
     noxref = comp.make_noxref()
 
     pobj = PCodeCatalog.create_from_file("pcode")
-    print pobj.catalog
+    print sorted(pobj.catalog.keys())
