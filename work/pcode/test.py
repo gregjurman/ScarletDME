@@ -1,10 +1,12 @@
 import struct
 import mmap
 import shutil
+import os
+import cStringIO as csio
 from collections import namedtuple as _nt
 
 
-CodeHeader = _nt("CodeHeader", (
+CodeHeaderBase = _nt("CodeHeader", (
     "magic", "endian", "revision", "id", "start", "arg_count",
     "var_count", "max_stack", "symbol_table_offset",
     "line_table_offset", "object_size", "flags", "compile_time",
@@ -36,6 +38,32 @@ class HeaderFlags(object):
         a = self._flags[0][self._flags[1].index(attrname.upper())]
         return self.flags & a == a
 
+    def __int__(self):
+        return self.flags
+
+
+class CodeHeader(CodeHeaderBase):
+    def __init__(self, **kwargs):
+        super(CodeHeader, self).__init__(**kwargs)
+
+    @classmethod
+    def unpack(self, data):
+        obj = memoryview(data)
+        h_raw = list(struct.unpack("=bbIIHHHIIIHIH129s", obj[0:165]))
+        h_raw.insert(1, {100: "LITTLE", 101: "BIG"}.get(h_raw[0], "UNKNOWN"))
+        h_raw[-1] = h_raw[-1].rstrip("\0")
+        h_raw[-4] = HeaderFlags(h_raw[-4])
+
+        return CodeHeader(**dict(zip(CodeHeader._fields, h_raw)))
+
+    def replace(self, **kwargs):
+        return self._replace(**kwargs)
+
+    def pack(self):
+        arr = list(self)
+        del arr[1]
+        print arr
+        return struct.pack("=bbIIHHHIIIHIH129s", *arr)
 
 class CodeSegment:
     SYMTAB = 1
@@ -44,25 +72,35 @@ class CodeSegment:
 
 
 class CodeObject(object):
-    def __init__(self, path):
+    def __init__(self, data, path=None):
         self.path = path
-        self.fi = open(path, "r+b")
+        self._data = data
+        self._header = self._get_header()
+
+    def __repr__(self):
+        return "<CodeObject '%s': size=%i, flags=[%s]>" % (
+                self._header.name, self._header.object_size,
+                self._header.flags)
+
+    @classmethod
+    def create_from_file(self, path):
+        out = None
+        with open(path, "r+b") as fobj:
+            out = CodeObject(fobj.read(), path)
+        return out
+
+    def change_header(self, **kwargs):
+        self._header = self._header.replace(**kwargs)
 
     def _get_header(self):
-        self.fi.seek(0)
-        obj = mmap.mmap(self.fi.fileno(), 0)
-        h_raw = list(struct.unpack("=bbIIHHHIIIHIH129s", obj[0:165]))
-        h_raw.insert(1, {100:"LITTLE", 101: "BIG"}.get(h_raw[0], "UNKNOWN"))
-        h_raw[-1] = h_raw[-1].rstrip("\0")
-        h_raw[-4] = HeaderFlags(h_raw[-4])
-        obj.close()
+        obj = memoryview(self._data)
+        _header = CodeHeader.unpack(obj[0:165])
 
-        _header = CodeHeader(**dict(zip(CodeHeader._fields, h_raw)))
         return _header
 
     def _get_segment(self, segment):
-        _header = self._get_header()
-        obj = mmap.mmap(self.fi.fileno(), 0)
+        _header = self._header
+        obj = memoryview(self._data)
         _start = 0
         _end = 0
         if segment == CodeSegment.SYMTAB:
@@ -88,40 +126,62 @@ class CodeObject(object):
 
         return seg
 
-    def make_no_xref(self, new_path=None):
-        if new_path is None:
-            new_path = "%s.noxref" % self.path
+    def clone(self):
+        return CodeObject(""+self._data, self.path)
 
+    def truncate(self, new_size):
+        if new_size > len(self._data):
+            raise ValueError("New size must be less than current size")
+        self._data = self._data[0:new_size+1]
+
+    def make_noxref(self):
+        new_obj = self.clone()
         _header = self._get_header()
-        shutil.copy(self.path, new_path)
-        new_fi = open(new_path, "r+b")
-        new_obj = mmap.mmap(new_fi.fileno(), 0)
-        obj = mmap.mmap(self.fi.fileno(), 0)
         obj_size = _header.object_size
         sym_tab_off = _header.symbol_table_offset
         if sym_tab_off: obj_size = sym_tab_off
         line_tab_off = _header.line_table_offset
         if line_tab_off: obj_size = line_tab_off
-        new_obj[16:28] = struct.pack("=III", 0, 0, obj_size)
-        new_obj.resize(obj_size)
-        new_obj.flush()
+        new_obj.change_header(symbol_table_offset=0, line_table_offset=0, object_size=obj_size)
+        new_obj.truncate(obj_size)
 
-        new_obj.close()
-        obj.close()
-
-        return CodeObject(new_path)
+        return new_obj
 
     def is_recursive(self):
         _header = self._get_header()
-        return _header.name[0] == "_" and _header.flags.recursive
+        return os.path.basename(self.path)[0] == "_" and _header.flags.recursive
+
+
+class PCodeCatalog(object):
+    def __init__(self, data, path=None):
+        self.path = path
+        self._data = data
+        self._generate_cache()
+
+    @classmethod
+    def create_from_file(self, path):
+        out = None
+        with open(path, "r+b") as fobj:
+            out = PCodeCatalog(fobj.read(), path)
+        return out
+
+    def _generate_cache(self):
+        obj = memoryview(self._data)
+        self.catalog = {}
+        i = 0
+        while i < len(obj):
+            pname = obj[i+36:i+999].tobytes().split("\0", 1)[0]
+            j = (struct.unpack("I", obj[i+24:i+28])[0]+3) & (~0x03)
+
+            self.catalog[pname] = CodeObject(obj[i:i+j+1])
+            i += j
 
 
 if __name__ == "__main__":
-    comp = CodeObject("test.comp")
-    print comp._get_header()
+    comp = CodeObject.create_from_file("BCOMP")
+    print comp._header
     print
+    noxref = comp.make_noxref()
 
-    new_file = comp.make_no_xref()
-    print new_file._get_header().flags.internal
-    print new_file._get_header().flags.recursive
-    print new_file.is_recursive()
+    pobj = PCodeCatalog.create_from_file("pcode")
+    print pobj.catalog
