@@ -62,8 +62,8 @@ class CodeHeader(CodeHeaderBase):
     def pack(self):
         arr = list(self)
         del arr[1]
-        print arr
         return struct.pack("=bbIIHHHIIIHIH129s", *arr)
+
 
 class CodeSegment:
     SYMTAB = 1
@@ -161,6 +161,10 @@ class CodeObject(object):
         return self._data
         return self._header.pack() + mobj[165:].tobytes()
 
+    @property
+    def header(self):
+        return self._header
+
 
 class PCodeCatalog(object):
     def __init__(self, data, path=None):
@@ -183,8 +187,13 @@ class PCodeCatalog(object):
             pname = obj[i+36:i+999].tobytes().split("\0", 1)[0]
             j = (struct.unpack("I", obj[i+24:i+28])[0]+3) & (~0x03)
 
-            self.catalog[pname] = CodeObject(obj[i:i+j+1])
+            self.catalog[pname] = CodeObject(obj[i:i+j])
             i += j
+
+    def write(self, path):
+        with open(path, "wb") as out_file:
+            for v in self.catalog.values():
+                out_file.write(v.data)
 
 
 if __name__ == "__main__":
@@ -195,3 +204,6 @@ if __name__ == "__main__":
 
     pobj = PCodeCatalog.create_from_file("pcode")
     print sorted(pobj.catalog.keys())
+
+    pobj.catalog['OCONV'].write("OCONV.out")
+    pobj.write("newpcode")
