@@ -166,8 +166,8 @@ class CodeObject(object):
         return self._header
 
 
-class PCodeCatalog(object):
-    def __init__(self, data, path=None):
+class CodeCatalog(object):
+    def __init__(self, data="", path=None):
         self.path = path
         self._data = data
         self._generate_cache()
@@ -176,8 +176,21 @@ class PCodeCatalog(object):
     def create_from_file(self, path):
         out = None
         with open(path, "r+b") as fobj:
-            out = PCodeCatalog(fobj.read(), path)
+            out = CodeCatalog(fobj.read(), path)
         return out
+
+    @classmethod
+    def create_from_iter(self, iterable):
+        if not isinstance(iterable, (list, tuple,)):
+            raise ValueError("iterable argument must be a list or tuple")
+        for x in iterable:
+            if not isinstance(x, CodeObject):
+                raise ValueError("iterable must contain CodeObjects only")
+        o = CodeCatalog()
+        for x in iterable:
+            o.catalog[x.header.name] = x
+
+        return o
 
     def _generate_cache(self):
         obj = memoryview(self._data)
@@ -202,8 +215,9 @@ if __name__ == "__main__":
     print
     noxref = comp.make_noxref()
 
-    pobj = PCodeCatalog.create_from_file("pcode")
-    print sorted(pobj.catalog.keys())
+    pobj = CodeCatalog.create_from_file("pcode")
 
-    pobj.catalog['OCONV'].write("OCONV.out")
-    pobj.write("newpcode")
+    newpobj = CodeCatalog.create_from_iter(pobj.catalog.values())
+
+    newpobj.catalog['OCONV'].write("OCONV.out")
+    newpobj.write("newpcode2")
