@@ -105,10 +105,24 @@ def opgen():
         of.write("\n")
 
         of.write("$ifdef OPCODE.MODES\n")
-        of.write("simple.modes = " + \
-                 "\"%s\"\n" % "".join([chr(ord("A")+modes[x[2]]) for x in simple_opcodes]))
-        of.write("secondary.modes = " + \
-                 "\"%s\"\n" % "".join([chr(ord("A")+modes[x[1]]) for y, x in secondary_opcodes.iteritems()]))
+        of.write("simple.modes = \"")
+        opvals = dict([(y, chr(ord("A")+modes[e])) for x, y, e in sorted(simple_opcodes, key=lambda x: x[1])])
+        for i in range(256):
+            if i in opvals:
+                of.write(opvals[i])
+            else:
+                of.write(".")
+        of.write("\"\n")
+
+        of.write("secondary.modes = \"")
+        opvals = dict([(x & 0xff, chr(ord("A")+modes[y[1]])) for x, y in sorted(secondary_opcodes.iteritems(), key=lambda x: x[0])])
+        for i in range(256):
+            if i in opvals:
+                of.write(opvals[i])
+            else:
+                of.write(".")
+        of.write("\"\n")
+
         of.write("$endif\n")
 
 
